@@ -3,7 +3,7 @@ export declare const sectionsComponents: {
         title: any;
     }) => any;
 };
-export declare const settingsSettingsSchemas: {
+export declare const sectionSettingsSchemas: {
     hero: ({
         id: string;
         label: string;

@@ -4,6 +4,6 @@ export const sectionsComponents = {
   hero: Hero,
 };
 
-export const settingsSettingsSchemas = {
+export const sectionSettingsSchemas = {
   hero: heroSettingsSchema,
 };
