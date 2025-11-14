@@ -1,5 +1,9 @@
-import { Hero } from "./sections/Hero";
+import { Hero, heroSettingsSchema } from "./sections/Hero";
 
-export const registry = {
+export const sectionsComponents = {
   hero: Hero,
+};
+
+export const settingsSettingsSchemas = {
+  hero: heroSettingsSchema,
 };
