@@ -2,6 +2,7 @@ export declare const sectionsComponents: {
     hero: ({ title }: {
         title: any;
     }) => any;
+    header: () => any;
 };
 export declare const sectionSettingsSchemas: {
     hero: ({
@@ -90,5 +91,16 @@ export declare const sectionSettingsSchemas: {
         info: string;
         default?: undefined;
         options?: undefined;
+    })[];
+    header: ({
+        id: string;
+        label: string;
+        type: string;
+        default: string;
+    } | {
+        id: string;
+        label: string;
+        type: string;
+        default?: undefined;
     })[];
 };
