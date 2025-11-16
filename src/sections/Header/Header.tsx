@@ -1,15 +1,31 @@
 import { Button } from "@theme/ui"
-// import { Logo } from "@theme/ui"
+import { Logo } from "@/src/components/ui/logo"
+import { Menu, X } from "lucide-react";
+import { useState } from "react";
 import Link from "next/link";
 
 export const Header = () => {
+
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const toggleMenu = () => setIsMenuOpen((prev) => !prev);
+
+
   return (
     <nav className="bg-background sticky top-0 isolate z-50 border-b py-3.5 md:py-4">
       <div className="relative container m-auto flex flex-col justify-between gap-4 px-6 md:flex-row md:items-center md:gap-6">
         <div className="flex items-center justify-between">
           <Link href="/">
-            {/* <Logo /> */}
+            <Logo />
           </Link>
+          <Button
+            variant="ghost"
+            className="flex size-9 items-center justify-center md:hidden"
+            onClick={toggleMenu}
+            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+          >
+            {isMenuOpen ? <X /> : <Menu />}
+          </Button>
         </div>
 
         {/* Desktop Navigation */}
