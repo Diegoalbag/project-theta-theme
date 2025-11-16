@@ -1,5 +1,5 @@
 import { Button } from "@theme/ui"
-import { Logo } from "@/src/components/ui/logo"
+import { Logo } from "../../components/ui/logo"
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
