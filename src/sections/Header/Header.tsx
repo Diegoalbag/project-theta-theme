@@ -1,5 +1,5 @@
-import { Button } from "@/src/components/ui/button"
-import { Logo } from "@/src/components/ui/logo"
+import { Button } from "@theme/ui"
+// import { Logo } from "@theme/ui"
 import Link from "next/link";
 
 export const Header = () => {
@@ -8,7 +8,7 @@ export const Header = () => {
       <div className="relative container m-auto flex flex-col justify-between gap-4 px-6 md:flex-row md:items-center md:gap-6">
         <div className="flex items-center justify-between">
           <Link href="/">
-            <Logo />
+            {/* <Logo /> */}
           </Link>
         </div>
 
