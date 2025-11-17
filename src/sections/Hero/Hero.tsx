@@ -69,7 +69,7 @@ export const Hero = ({ title }) => {
         <div className="w-full flex-1">
           <AspectRatio ratio={1 / 1}>
             <Image
-              src="../../../public/Hero.png"
+              src="/../../../public/Hero.png"
               alt="Hero visual"
               fill
               priority
