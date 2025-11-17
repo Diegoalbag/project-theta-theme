@@ -1917,7 +1917,7 @@ const xn = /* @__PURE__ */ Qr(Nn), In = ({ title: f }) => /* @__PURE__ */ z(
       /* @__PURE__ */ z("div", { className: "w-full flex-1", children: /* @__PURE__ */ z(pn, { ratio: 1 / 1, children: /* @__PURE__ */ z(
         xn,
         {
-          src: "./Hero.png",
+          src: "/Hero.png",
           alt: "Hero visual",
           fill: !0,
           priority: !0,
