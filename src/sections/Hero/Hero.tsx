@@ -2,8 +2,14 @@ import { Button } from "@theme/ui";
 import { Check, ArrowRight } from "lucide-react";
 import { AspectRatio } from "@theme/ui";
 import Image from "next/image";
+import type { StaticImageData } from "next/image";
 
-export const Hero = ({ title }) => {
+interface HeroProps {
+  title?: string;
+  heroImage?: string | StaticImageData;
+}
+
+export const Hero = ({ title, heroImage = "/Hero.png" }: HeroProps) => {
   return (
     <section
       className="bg-secondary section-padding-y"
@@ -69,7 +75,7 @@ export const Hero = ({ title }) => {
         <div className="w-full flex-1">
           <AspectRatio ratio={1 / 1}>
             <Image
-              src="/Hero.png"
+              src={heroImage}
               alt="Hero visual"
               fill
               priority

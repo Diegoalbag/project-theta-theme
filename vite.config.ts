@@ -8,6 +8,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  publicDir: 'public',
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
@@ -16,6 +17,7 @@ export default defineConfig({
       formats: ['es', 'cjs'],
     },
     cssCodeSplit: false,
+    copyPublicDir: true, // Copy public assets to dist
     rollupOptions: {
       // Externalize dependencies that shouldn't be bundled
       external: [

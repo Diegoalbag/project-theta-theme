@@ -1881,7 +1881,7 @@ function Tn() {
   return ir || (ir = 1, rt = wn()), rt;
 }
 var Nn = Tn();
-const xn = /* @__PURE__ */ Qr(Nn), In = ({ title: f }) => /* @__PURE__ */ z(
+const xn = /* @__PURE__ */ Qr(Nn), In = ({ title: f, heroImage: e = "/Hero.png" }) => /* @__PURE__ */ z(
   "section",
   {
     className: "bg-secondary section-padding-y",
@@ -1917,7 +1917,7 @@ const xn = /* @__PURE__ */ Qr(Nn), In = ({ title: f }) => /* @__PURE__ */ z(
       /* @__PURE__ */ z("div", { className: "w-full flex-1", children: /* @__PURE__ */ z(pn, { ratio: 1 / 1, children: /* @__PURE__ */ z(
         xn,
         {
-          src: "/Hero.png",
+          src: e,
           alt: "Hero visual",
           fill: !0,
           priority: !0,
