@@ -6,10 +6,37 @@ import type { StaticImageData } from "next/image";
 
 interface HeroProps {
   title?: string;
+  description?: string;
+  featureOne?: string;
+  featureTwo?: string;
+  featureThree?: string;
+  primaryCtaLabel?: string;
+  primaryCtaUrl?: string;
+  secondaryCtaLabel?: string;
+  secondaryCtaUrl?: string;
   heroImage?: string | StaticImageData;
+  textAlignment?: "left" | "center" | "right";
 }
 
-export const Hero = ({ title }: HeroProps) => {
+export const Hero = ({
+  title,
+  description,
+  featureOne,
+  featureTwo,
+  featureThree,
+  primaryCtaLabel,
+  primaryCtaUrl,
+  secondaryCtaLabel,
+  secondaryCtaUrl,
+  heroImage,
+  textAlignment,
+}: HeroProps) => {
+  const alignmentClasses = {
+    left: "text-left",
+    center: "text-center",
+    right: "text-right",
+  };
+
   return (
     <section
       className="bg-secondary section-padding-y"
@@ -17,56 +44,65 @@ export const Hero = ({ title }: HeroProps) => {
     >
       <div className="container-padding-x container mx-auto flex flex-col items-center gap-12 lg:flex-row lg:gap-16">
         {/* Left Column */}
-        <div className="flex flex-1 flex-col gap-6 lg:gap-8">
+        <div className={`flex flex-1 flex-col gap-6 lg:gap-8 ${alignmentClasses[textAlignment || "left"]}`}>
           {/* Section Title */}
           <div className="section-title-gap-xl flex flex-col">
             {/* Main Heading */}
             <h1 id="hero-heading" className="heading-xl">
-              Never forget what was said in a meeting again
+              {title}
             </h1>
             {/* Description */}
             <p className="text-muted-foreground text-base lg:text-lg">
-              AI that joins, transcribes, and transforms your meetings into
-              structured knowledge
+              {description}
             </p>
           </div>
 
           {/* Feature List */}
           <div className="flex flex-col gap-2 md:gap-3">
-            <div className="flex items-start gap-3">
-              <div className="pt-0.5">
-                <Check className="text-primary h-5 w-5" />
+            {featureOne && (
+              <div className="flex items-start gap-3">
+                <div className="pt-0.5">
+                  <Check className="text-primary h-5 w-5" />
+                </div>
+                <span className="text-card-foreground text-base leading-6 font-medium">
+                  {featureOne}
+                </span>
               </div>
-              <span className="text-card-foreground text-base leading-6 font-medium">
-                Deal progress tracking
-              </span>
-            </div>
+            )}
 
-            <div className="flex items-start gap-3">
-              <div className="pt-0.5">
-                <Check className="text-primary h-5 w-5" />
+            {featureTwo && (
+              <div className="flex items-start gap-3">
+                <div className="pt-0.5">
+                  <Check className="text-primary h-5 w-5" />
+                </div>
+                <span className="text-card-foreground text-base leading-6 font-medium">
+                  {featureTwo}
+                </span>
               </div>
-              <span className="text-card-foreground text-base leading-6 font-medium">
-                Customer sentiment analysis
-              </span>
-            </div>
+            )}
 
-            <div className="flex items-start gap-3">
-              <div className="pt-0.5">
-                <Check className="text-primary h-5 w-5" />
+            {featureThree && (
+              <div className="flex items-start gap-3">
+                <div className="pt-0.5">
+                  <Check className="text-primary h-5 w-5" />
+                </div>
+                <span className="text-card-foreground text-base leading-6 font-medium">
+                  {featureThree}
+                </span>
               </div>
-              <span className="text-card-foreground text-base leading-6 font-medium">
-                Automatic CRM updates
-              </span>
-            </div>
+            )}
           </div>
 
           {/* CTA Buttons */}
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button>Try for free</Button>
-            <Button variant="ghost">
-              How it works
-              <ArrowRight />
+            <Button asChild>
+              <a href={primaryCtaUrl}>{primaryCtaLabel}</a>
+            </Button>
+            <Button variant="ghost" asChild>
+              <a href={secondaryCtaUrl}>
+                {secondaryCtaLabel}
+                <ArrowRight />
+              </a>
             </Button>
           </div>
         </div>
@@ -90,107 +126,75 @@ export const Hero = ({ title }: HeroProps) => {
 
 export const heroSettingsSchema = [
   {
-    id: "heading",
+    id: "title",
     label: "Heading",
     type: "text",
-    default: "Welcome to our site",
-    info: "Main section heading",
+    default: "Never forget what was said in a meeting again",
   },
   {
-    id: "subheading",
-    label: "Subheading",
+    id: "description",
+    label: "Description",
     type: "textarea",
-    default: "This is a subtitle description.",
+    default:
+      "AI that joins, transcribes, and transforms your meetings into structured knowledge",
   },
   {
-    id: "showDivider",
-    label: "Show Divider",
-    type: "radio",
-    options: [
-      { value: true, label: "Yes" },
-      { value: false, label: "No" },
-    ],
-    default: true,
-  },
-  {
-    id: "itemsPerRow",
-    label: "Items per row",
-    type: "number",
-    default: 3,
-    info: "How many items display in a row",
-  },
-  {
-    id: "spacing",
-    label: "Spacing",
-    type: "number",
-    default: 24,
-    info: "Spacing (in px) between items",
-  },
-  {
-    id: "layoutVariant",
-    label: "Layout variant",
-    type: "select",
-    options: [
-      { value: "variantA", label: "Variant A" },
-      { value: "variantB", label: "Variant B" },
-      { value: "variantC", label: "Variant C" },
-    ],
-    default: "variantA",
-  },
-  {
-    id: "backgroundColor",
-    label: "Background Color",
-    type: "custom",
-    customType: "colorPicker",
-    default: "#ffffff",
-  },
-  {
-    id: "backgroundImage",
-    label: "Background Image",
-    type: "custom",
-    customType: "imagePicker",
-  },
-  {
-    id: "buttonLink",
-    label: "Button Link",
+    id: "featureOne",
+    label: "Feature #1",
     type: "text",
-    info: "URL for the button CTA",
+    default: "Deal progress tracking",
   },
   {
-    id: "enableVideo",
-    label: "Enable Video",
-    type: "checkbox",
-    default: false,
+    id: "featureTwo",
+    label: "Feature #2",
+    type: "text",
+    default: "Customer sentiment analysis",
   },
   {
-    id: "videoURL",
-    label: "Video URL",
-    type: "custom",
-    customType: "videoUrlPicker",
-    info: "YouTube or Vimeo link",
+    id: "featureThree",
+    label: "Feature #3",
+    type: "text",
+    default: "Automatic CRM updates",
   },
   {
-    id: "fontChoice",
-    label: "Font",
-    type: "custom",
-    customType: "fontPicker",
-    default: "sans-serif",
+    id: "primaryCtaLabel",
+    label: "Primary button label",
+    type: "text",
+    default: "Try for free",
   },
   {
-    id: "richContent",
-    label: "Rich Content",
-    type: "textarea",
-    info: "Use HTML or rich text if supported",
+    id: "primaryCtaUrl",
+    label: "Primary button URL",
+    type: "text",
+    default: "#",
+  },
+  {
+    id: "secondaryCtaLabel",
+    label: "Secondary button label",
+    type: "text",
+    default: "How it works",
+  },
+  {
+    id: "secondaryCtaUrl",
+    label: "Secondary button URL",
+    type: "text",
+    default: "#",
+  },
+  {
+    id: "heroImage",
+    label: "Hero image URL",
+    type: "text", // or custom: imagePicker later
+    default:
+      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Hero-EK6lJQh9Tq3HAhrRx6QQGhjNwND9Gs.png",
   },
   {
     id: "textAlignment",
-    label: "Text Alignment",
+    label: "Text alignment",
     type: "select",
     options: [
       { value: "left", label: "Left" },
       { value: "center", label: "Center" },
-      { value: "right", label: "Right" },
     ],
-    default: "center",
+    default: "left",
   },
 ];
