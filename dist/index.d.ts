@@ -1,2 +1,1 @@
-import "./index.css";
-export * from "./registry";
+export * from './registry';

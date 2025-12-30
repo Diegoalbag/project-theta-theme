@@ -1,5 +1,5 @@
-import { Button } from "@/src/components/ui/button";
-import { AspectRatio } from "@/src/components/ui/aspect-ratio";
+import { Button } from "@/components/ui/button";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Check, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import type { StaticImageData } from "next/image";
