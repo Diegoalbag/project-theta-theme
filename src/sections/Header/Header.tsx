@@ -1,15 +1,13 @@
-import { Button } from "@theme/ui"
-import { Logo } from "../../components/ui/logo"
+import { Button } from "@/src/components/ui/button";
+import { Logo } from "../../components/ui/logo";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 
 export const Header = () => {
-
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const toggleMenu = () => setIsMenuOpen((prev) => !prev);
-
 
   return (
     <nav className="bg-background sticky top-0 isolate z-50 border-b py-3.5 md:py-4">

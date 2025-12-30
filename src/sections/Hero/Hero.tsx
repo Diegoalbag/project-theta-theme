@@ -1,10 +1,10 @@
-import { Button } from "@theme/ui";
+import { Button } from "@/src/components/ui/button";
+import { AspectRatio } from "@/src/components/ui/aspect-ratio";
 import { Check, ArrowRight } from "lucide-react";
-import { AspectRatio } from "@theme/ui";
 import Image from "next/image";
 import type { StaticImageData } from "next/image";
 
-interface HeroProps {
+export interface HeroProps {
   title?: string;
   description?: string;
   featureOne?: string;
@@ -44,7 +44,9 @@ export const Hero = ({
     >
       <div className="container-padding-x container mx-auto flex flex-col items-center gap-12 lg:flex-row lg:gap-16">
         {/* Left Column */}
-        <div className={`flex flex-1 flex-col gap-6 lg:gap-8 ${alignmentClasses[textAlignment || "left"]}`}>
+        <div
+          className={`flex flex-1 flex-col gap-6 lg:gap-8 ${alignmentClasses[textAlignment || "left"]}`}
+        >
           {/* Section Title */}
           <div className="section-title-gap-xl flex flex-col">
             {/* Main Heading */}
