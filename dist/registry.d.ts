@@ -8,26 +8,31 @@ export declare const sectionSettingsSchemas: {
         label: string;
         type: string;
         default: string;
-        options?: undefined;
+        placeholder?: undefined;
+        info?: undefined;
     } | {
         id: string;
         label: string;
         type: string;
-        options: {
-            value: string;
-            label: string;
-        }[];
         default: string;
-    })[];
-    header: ({
-        id: string;
-        label: string;
-        type: string;
-        default: string;
+        placeholder: string;
+        info?: undefined;
     } | {
         id: string;
         label: string;
         type: string;
-        default?: undefined;
+        default: {
+            src: string;
+            alt: string;
+            width: number;
+            height: number;
+        };
+        info: string;
+        placeholder?: undefined;
     })[];
+    header: {
+        id: string;
+        label: string;
+        type: string;
+    }[];
 };

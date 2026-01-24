@@ -14,7 +14,10 @@ export interface HeroProps {
   primaryCtaUrl?: string;
   secondaryCtaLabel?: string;
   secondaryCtaUrl?: string;
-  heroImage?: string | StaticImageData;
+  heroImage?: {
+    url: string;
+    id: string;
+  };
   textAlignment?: "left" | "center" | "right";
 }
 
@@ -113,7 +116,7 @@ export const Hero = ({
         <div className="w-full flex-1">
           <AspectRatio ratio={1 / 1}>
             <Image
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Hero-EK6lJQh9Tq3HAhrRx6QQGhjNwND9Gs.png"
+              src={heroImage.url || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Hero-EK6lJQh9Tq3HAhrRx6QQGhjNwND9Gs.png"}
               alt="Hero visual"
               fill
               priority
@@ -167,8 +170,9 @@ export const heroSettingsSchema = [
   {
     id: "primaryCtaUrl",
     label: "Primary button URL",
-    type: "text",
+    type: "url",
     default: "#",
+    placeholder: "https://example.com",
   },
   {
     id: "secondaryCtaLabel",
@@ -179,24 +183,26 @@ export const heroSettingsSchema = [
   {
     id: "secondaryCtaUrl",
     label: "Secondary button URL",
-    type: "text",
+    type: "url",
     default: "#",
+    placeholder: "https://example.com",
   },
   {
     id: "heroImage",
-    label: "Hero image URL",
-    type: "text", // or custom: imagePicker later
-    default:
-      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Hero-EK6lJQh9Tq3HAhrRx6QQGhjNwND9Gs.png",
+    label: "Hero image",
+    type: "image_picker",
+    default: {
+      src: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Hero-EK6lJQh9Tq3HAhrRx6QQGhjNwND9Gs.png",
+      alt: "Hero visual",
+      width: 1000,
+      height: 1000,
+    },
+    info: "Upload or select an image for the hero section",
   },
   {
     id: "textAlignment",
     label: "Text alignment",
-    type: "select",
-    options: [
-      { value: "left", label: "Left" },
-      { value: "center", label: "Center" },
-    ],
+    type: "text_alignment",
     default: "left",
   },
 ];

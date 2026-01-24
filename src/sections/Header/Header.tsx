@@ -79,7 +79,7 @@ export const Header = () => {
 };
 
 export const headerSettingsSchema = [
-  { id: "title", label: "Heading", type: "text", default: "Welcome" },
+  // { id: "title", label: "Heading", type: "text", default: "Welcome" },
   { id: "subtitle", label: "Subheading", type: "text" },
   { id: "content", label: "Body", type: "richtext" },
   { id: "background_image", label: "Background image", type: "image_picker" },

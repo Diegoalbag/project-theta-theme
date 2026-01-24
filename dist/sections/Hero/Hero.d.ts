@@ -1,4 +1,3 @@
-import { StaticImageData } from 'next/image';
 export interface HeroProps {
     title?: string;
     description?: string;
@@ -9,7 +8,10 @@ export interface HeroProps {
     primaryCtaUrl?: string;
     secondaryCtaLabel?: string;
     secondaryCtaUrl?: string;
-    heroImage?: string | StaticImageData;
+    heroImage?: {
+        url: string;
+        id: string;
+    };
     textAlignment?: "left" | "center" | "right";
 }
 export declare const Hero: ({ title, description, featureOne, featureTwo, featureThree, primaryCtaLabel, primaryCtaUrl, secondaryCtaLabel, secondaryCtaUrl, heroImage, textAlignment, }: HeroProps) => any;
@@ -18,14 +20,25 @@ export declare const heroSettingsSchema: ({
     label: string;
     type: string;
     default: string;
-    options?: undefined;
+    placeholder?: undefined;
+    info?: undefined;
 } | {
     id: string;
     label: string;
     type: string;
-    options: {
-        value: string;
-        label: string;
-    }[];
     default: string;
+    placeholder: string;
+    info?: undefined;
+} | {
+    id: string;
+    label: string;
+    type: string;
+    default: {
+        src: string;
+        alt: string;
+        width: number;
+        height: number;
+    };
+    info: string;
+    placeholder?: undefined;
 })[];
