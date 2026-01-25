@@ -116,7 +116,7 @@ export const Hero = ({
         <div className="w-full flex-1">
           <AspectRatio ratio={1 / 1}>
             <Image
-              src={heroImage.url || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Hero-EK6lJQh9Tq3HAhrRx6QQGhjNwND9Gs.png"}
+              src={heroImage?.url || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Hero-EK6lJQh9Tq3HAhrRx6QQGhjNwND9Gs.png"}
               alt="Hero visual"
               fill
               priority
