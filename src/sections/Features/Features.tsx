@@ -1,3 +1,4 @@
+import React from "react";
 import { Zap, Shield, BarChart3, Clock, Users, Settings } from "lucide-react";
 
 export interface FeatureItem {
