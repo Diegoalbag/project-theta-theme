@@ -1,54 +1,32 @@
-# Theta Theme Default
+# Theme Site Template
 
-This is the first theme boilerplate for the project.
+This is a Next.js template for deploying themes as standalone websites.
 
-It provides a starting point for developing themes, with example section components and a basic project structure.
+## Environment Variables
 
-## Installation
+- `NEXT_PUBLIC_STRAPI_URL` - Strapi base URL (without /graphql suffix, e.g., `http://localhost:1337`)
+- `NEXT_PUBLIC_STRAPI_TOKEN` - Strapi access token
+- `NEXT_PUBLIC_THEME_BUNDLE_URL` - URL to the theme bundle JavaScript file
+- `NEXT_PUBLIC_THEME_NAME` - Name of the theme (used for loading from window.__THETA_THEMES__)
+- `NEXT_PUBLIC_SITE_SUBDOMAIN` - Subdomain for this site
 
-```bash
-npm install theta-theme-default
-# or
-yarn add theta-theme-default
-```
+## Build Process
 
-## Usage
+1. Fetches all pages from Strapi at build time
+2. Generates static routes for each page slug
+3. Builds Next.js app with theme bundle
+4. Deploys to Vercel
 
-### Import Components and Styles
-
-```typescript
-import { Hero, Header } from 'theta-theme-default';
-import 'theta-theme-default/style.css';
-```
-
-### Using the Hero Component
-
-The Hero component accepts a `heroImage` prop for flexibility:
-
-```typescript
-import { Hero } from 'theta-theme-default';
-import MyHeroImage from './public/my-hero.png';
-
-export default function Page() {
-  return <Hero heroImage={MyHeroImage} />;
-}
-```
-
-**Options for `heroImage` prop:**
-- Import your own image: `import MyImage from './image.png'`
-- Use a public URL: `heroImage="https://example.com/image.png"`
-- Use the default: Leave empty or use `heroImage="/Hero.png"` (requires copying `dist/Hero.png` to your public folder)
-
-## Building
+## Development
 
 ```bash
-yarn build:vite  # Build with Vite (recommended)
-yarn build       # Build with TypeScript compiler
+npm install
+npm run dev
 ```
 
-## Package Contents
+## Build
 
-- `dist/index.js` - ES module
-- `dist/index.cjs` - CommonJS module
-- `dist/theta-theme-default.css` - Compiled Tailwind CSS
-- `dist/Hero.png` - Default hero image asset
+```bash
+npm run build
+npm start
+```

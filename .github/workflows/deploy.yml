@@ -1,0 +1,344 @@
+name: Deploy Theme Site
+
+on:
+  push:
+    branches:
+      - '**'  # Trigger on all branches
+  workflow_dispatch:
+    inputs:
+      theme_id:
+        description: 'Theme ID from Strapi'
+        required: true
+        type: string
+      strapi_graphql_url:
+        description: 'Strapi GraphQL URL (e.g., http://localhost:1337/graphql)'
+        required: true
+        type: string
+      strapi_access_token:
+        description: 'Strapi Access Token'
+        required: true
+        type: string
+      theme_bundle_url:
+        description: 'Theme Bundle URL'
+        required: true
+        type: string
+      theme_name:
+        description: 'Theme Name'
+        required: true
+        type: string
+      vercel_token:
+        description: 'Vercel API Token'
+        required: true
+        type: string
+      vercel_team_id:
+        description: 'Vercel Team ID (optional)'
+        required: false
+        type: string
+      subdomain:
+        description: 'Subdomain for deployment'
+        required: true
+        type: string
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Determine branch type
+        id: branch-type
+        run: |
+          BRANCH="${{ github.ref_name }}"
+          if [[ "$BRANCH" == *"-build" ]]; then
+            echo "branch_type=build" >> $GITHUB_OUTPUT
+            echo "source_branch=${BRANCH%-build}" >> $GITHUB_OUTPUT
+            echo "build_branch=$BRANCH" >> $GITHUB_OUTPUT
+          else
+            echo "branch_type=source" >> $GITHUB_OUTPUT
+            echo "source_branch=$BRANCH" >> $GITHUB_OUTPUT
+            echo "build_branch=${BRANCH}-build" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout source branch for theme build
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.branch-type.outputs.source_branch }}
+          path: theme-source
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Build theme bundle
+        id: build-theme
+        working-directory: theme-source
+        run: |
+          # Install theme dependencies
+          if [ -f "package.json" ]; then
+            if [ -f "package-lock.json" ]; then
+              npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+            else
+              npm install --legacy-peer-deps
+            fi
+          fi
+          
+          # Build theme bundle (try common build commands)
+          if [ -f "package.json" ]; then
+            # Try npm run build:theme first, then npm run build, then npm run build:bundle
+            if npm run build:theme 2>/dev/null; then
+              echo "Built with 'npm run build:theme'"
+            elif npm run build 2>/dev/null; then
+              echo "Built with 'npm run build'"
+            elif npm run build:bundle 2>/dev/null; then
+              echo "Built with 'npm run build:bundle'"
+            else
+              echo "No build script found, skipping theme build"
+            fi
+          fi
+          
+          # Find the built bundle file (look in dist/, build/, or root)
+          BUNDLE_FILE=$(find . -name "*.bundle.js" -o -name "theme*.js" | grep -v node_modules | head -n 1)
+          if [ -z "$BUNDLE_FILE" ]; then
+            BUNDLE_FILE=$(find dist build . -maxdepth 2 -name "*.js" -type f | grep -v node_modules | head -n 1)
+          fi
+          
+          if [ -n "$BUNDLE_FILE" ]; then
+            echo "bundle_file=$BUNDLE_FILE" >> $GITHUB_OUTPUT
+            echo "bundle_found=true" >> $GITHUB_OUTPUT
+          else
+            echo "bundle_found=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Copy theme bundle to build branch (for source branch pushes)
+        if: steps.branch-type.outputs.branch_type == 'source' && steps.build-theme.outputs.bundle_found == 'true'
+        run: |
+          BUNDLE_FILE="${{ steps.build-theme.outputs.bundle_file }}"
+          BUILD_BRANCH="${{ steps.branch-type.outputs.build_branch }}"
+          
+          # Checkout build branch (create if it doesn't exist)
+          git fetch origin "$BUILD_BRANCH" 2>/dev/null || true
+          if git ls-remote --heads origin "$BUILD_BRANCH" | grep -q "$BUILD_BRANCH"; then
+            git checkout "$BUILD_BRANCH"
+            git pull origin "$BUILD_BRANCH" || true
+          else
+            git checkout -b "$BUILD_BRANCH"
+          fi
+          
+          # Copy bundle to dist directory
+          mkdir -p dist
+          cp "theme-source/$BUNDLE_FILE" dist/theme.bundle.js || cp "theme-source/$BUNDLE_FILE" dist/
+          
+          # Commit bundle to build branch
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add dist/
+          git commit -m "Update theme bundle from ${{ steps.branch-type.outputs.source_branch }}" || echo "No changes to commit"
+          git push origin "$BUILD_BRANCH" || echo "Push failed or no changes"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Copy theme bundle to build branch (for build branch pushes)
+        if: steps.branch-type.outputs.branch_type == 'build' && steps.build-theme.outputs.bundle_found == 'true'
+        run: |
+          BUNDLE_FILE="${{ steps.build-theme.outputs.bundle_file }}"
+          
+          # We're already on the build branch, just copy and commit
+          mkdir -p dist
+          cp "theme-source/$BUNDLE_FILE" dist/theme.bundle.js || cp "theme-source/$BUNDLE_FILE" dist/
+          
+          # Commit bundle to build branch
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add dist/
+          git commit -m "Update theme bundle from ${{ steps.branch-type.outputs.source_branch }}" || echo "No changes to commit"
+          git push origin HEAD || echo "Push failed or no changes"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout build branch (for deployment)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.branch-type.outputs.build_branch }}
+
+      - name: Checkout source branch again for dependency merge
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.branch-type.outputs.source_branch }}
+          path: theme-source
+
+      - name: Merge dependencies from theme branch
+        if: hashFiles('theme-source/package.json') != ''
+        run: |
+          if [ -f "theme-source/package.json" ] && [ -f "package.json" ]; then
+            node << 'EOF'
+          const fs = require('fs');
+          
+          const templatePkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          const themePkg = JSON.parse(fs.readFileSync('theme-source/package.json', 'utf8'));
+          
+          // Merge dependencies from theme branch into template
+          if (themePkg.dependencies) {
+            templatePkg.dependencies = {
+              ...templatePkg.dependencies,
+              ...themePkg.dependencies
+            };
+          }
+          
+          // Merge devDependencies from theme branch into template
+          if (themePkg.devDependencies) {
+            templatePkg.devDependencies = {
+              ...templatePkg.devDependencies,
+              ...themePkg.devDependencies
+            };
+          }
+          
+          // Write merged package.json
+          fs.writeFileSync('package.json', JSON.stringify(templatePkg, null, 2) + '\n');
+          console.log('Merged dependencies from theme branch');
+          EOF
+          else
+            echo "Skipping dependency merge: theme-source/package.json or package.json not found"
+          fi
+      - name: Setup Node.js for site build
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install site dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Check for existing bundle in dist folder
+        id: check-bundle
+        run: |
+          if [ -f "dist/theme.bundle.js" ]; then
+            echo "bundle_exists=true" >> $GITHUB_OUTPUT
+            echo "Found theme.bundle.js in dist/ folder"
+            ls -lh dist/theme.bundle.js
+          else
+            echo "bundle_exists=false" >> $GITHUB_OUTPUT
+            echo "No theme.bundle.js found in dist/ folder"
+            echo "Contents of dist/ folder:"
+            ls -la dist/ 2>/dev/null || echo "dist/ folder does not exist"
+          fi
+
+      - name: Determine theme bundle URL
+        id: bundle-url
+        run: |
+          if [ "${{ github.event.inputs.theme_bundle_url }}" != "" ]; then
+            echo "bundle_url=${{ github.event.inputs.theme_bundle_url }}" >> $GITHUB_OUTPUT
+            echo "Using provided theme_bundle_url input"
+          elif [ "${{ steps.check-bundle.outputs.bundle_exists }}" == "true" ] || [ "${{ steps.build-theme.outputs.bundle_found }}" == "true" ]; then
+            # Use raw GitHub URL for the bundle in the build branch
+            OWNER="${{ github.repository_owner }}"
+            REPO="${{ github.event.repository.name }}"
+            BUILD_BRANCH="${{ steps.branch-type.outputs.build_branch }}"
+            BUNDLE_PATH="dist/theme.bundle.js"
+            BUNDLE_URL="https://raw.githubusercontent.com/${OWNER}/${REPO}/${BUILD_BRANCH}/${BUNDLE_PATH}"
+            echo "bundle_url=${BUNDLE_URL}" >> $GITHUB_OUTPUT
+            echo "Using bundle from build branch: ${BUNDLE_URL}"
+            echo "Bundle source: $([ '${{ steps.check-bundle.outputs.bundle_exists }}' == 'true' ] && echo 'existing in dist/' || echo 'built in this workflow')"
+          elif [ "${{ secrets.THEME_BUNDLE_URL }}" != "" ]; then
+            echo "bundle_url=${{ secrets.THEME_BUNDLE_URL }}" >> $GITHUB_OUTPUT
+            echo "Using THEME_BUNDLE_URL secret"
+          else
+            echo "bundle_url=" >> $GITHUB_OUTPUT
+            echo "ERROR: No theme bundle URL found!"
+            echo "Build will proceed but pages will show a configuration error."
+            echo ""
+            echo "Debugging info:"
+            echo "  - Theme bundle built: ${{ steps.build-theme.outputs.bundle_found }}"
+            echo "  - Bundle file: ${{ steps.build-theme.outputs.bundle_file }}"
+            echo "  - Bundle in dist/: ${{ steps.check-bundle.outputs.bundle_exists }}"
+            echo "  - THEME_BUNDLE_URL secret set: $([ -n '${{ secrets.THEME_BUNDLE_URL }}' ] && echo 'YES' || echo 'NO')"
+            echo ""
+            echo "Please either:"
+            echo "  1. Build the theme bundle and commit it to the build branch"
+            echo "  2. Set the THEME_BUNDLE_URL secret in GitHub"
+            echo "  3. Provide theme_bundle_url as a workflow input"
+          fi
+
+      - name: Validate theme bundle URL
+        run: |
+          BUNDLE_URL="${{ steps.bundle-url.outputs.bundle_url }}"
+          if [ -z "$BUNDLE_URL" ] || [ "$BUNDLE_URL" = "" ]; then
+            echo "ERROR: Theme bundle URL is not configured!"
+            echo "The site will be built but pages will show a configuration error."
+            echo "Please ensure the theme bundle is built and available."
+            # Don't fail the build, but warn
+          else
+            echo "Theme bundle URL configured: $BUNDLE_URL"
+            # Optionally verify the URL is accessible
+            if curl -f -s -o /dev/null -w "%{http_code}" "$BUNDLE_URL" | grep -q "200"; then
+              echo "✓ Theme bundle URL is accessible"
+            else
+              echo "⚠ Warning: Theme bundle URL may not be accessible (HTTP status check failed)"
+            fi
+          fi
+
+      - name: Extract Strapi base URL
+        id: strapi-base-url
+        run: |
+          STRAPI_URL="${{ github.event.inputs.strapi_graphql_url || secrets.STRAPI_GRAPHQL_URL }}"
+          # Remove /graphql suffix if present to get base URL
+          STRAPI_BASE_URL=$(echo "$STRAPI_URL" | sed 's|/graphql$||')
+          echo "base_url=$STRAPI_BASE_URL" >> $GITHUB_OUTPUT
+
+      - name: Verify environment variables before build
+        run: |
+          echo "=== Environment Variables for Build ==="
+          echo "NEXT_PUBLIC_STRAPI_URL: ${{ steps.strapi-base-url.outputs.base_url }}"
+          echo "NEXT_PUBLIC_STRAPI_TOKEN: [REDACTED - $(echo '${{ github.event.inputs.strapi_access_token || secrets.STRAPI_ACCESS_TOKEN }}' | wc -c) chars]"
+          echo "NEXT_PUBLIC_THEME_BUNDLE_URL: ${{ steps.bundle-url.outputs.bundle_url }}"
+          echo "NEXT_PUBLIC_THEME_NAME: ${{ github.event.inputs.theme_name || github.event.repository.name }}"
+          echo "NEXT_PUBLIC_SITE_SUBDOMAIN: ${{ github.event.inputs.subdomain || github.event.repository.name }}"
+          echo "========================================"
+          
+          BUNDLE_URL="${{ steps.bundle-url.outputs.bundle_url }}"
+          if [ -z "$BUNDLE_URL" ] || [ "$BUNDLE_URL" = "" ]; then
+            echo "ERROR: NEXT_PUBLIC_THEME_BUNDLE_URL is empty!"
+            echo "Build will proceed but pages will show configuration error."
+            echo "Please check:"
+            echo "  1. Theme bundle was built: ${{ steps.build-theme.outputs.bundle_found }}"
+            echo "  2. Bundle file: ${{ steps.build-theme.outputs.bundle_file }}"
+            echo "  3. THEME_BUNDLE_URL secret is set: $([ -n '${{ secrets.THEME_BUNDLE_URL }}' ] && echo 'YES' || echo 'NO')"
+          fi
+
+      - name: Build Next.js app
+        run: npm run build
+        env:
+          NEXT_PUBLIC_STRAPI_URL: ${{ steps.strapi-base-url.outputs.base_url }}
+          NEXT_PUBLIC_STRAPI_TOKEN: ${{ github.event.inputs.strapi_access_token || secrets.STRAPI_ACCESS_TOKEN }}
+          NEXT_PUBLIC_THEME_BUNDLE_URL: ${{ steps.bundle-url.outputs.bundle_url }}
+          NEXT_PUBLIC_THEME_NAME: ${{ github.event.inputs.theme_name || github.event.repository.name }}
+          NEXT_PUBLIC_SITE_SUBDOMAIN: ${{ github.event.inputs.subdomain || github.event.repository.name }}
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Deploy to Vercel
+        run: |
+          # Deploy the pre-built standalone output
+          # Note: Environment variables are already embedded in the build from the previous step
+          vercel deploy --prod --token=${{ github.event.inputs.vercel_token || secrets.VERCEL_TOKEN }} --yes
+        env:
+          VERCEL_ORG_ID: ${{ github.event.inputs.vercel_team_id || secrets.VERCEL_TEAM_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "Deployment successful"
+          else
+            echo "Deployment failed"
+          fi
