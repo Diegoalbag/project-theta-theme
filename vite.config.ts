@@ -60,7 +60,7 @@ export default defineConfig({
         },
         entryFileNames: "theme.bundle.js",
         chunkFileNames: "theme.bundle.js",
-        assetFileNames: "theme.[ext]",
+        assetFileNames: "theme.bundle.[ext]",
       },
     },
   },
