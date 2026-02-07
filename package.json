@@ -17,7 +17,7 @@
     "./assets/*": "./dist/*"
   },
   "scripts": {
-    "build": "vite build && tailwindcss -i ./src/index.css -o ./dist/theta-theme-default.css --minify",
+    "build": "vite build && vite build --config vite.lib.config.ts && tailwindcss -i ./src/index.css -o ./dist/theta-theme-default.css --minify",
     "build:vite": "vite build",
     "watch": "node scripts/sync-to-node-modules.js & vite build --watch & tailwindcss -i ./src/index.css -o ./dist/theta-theme-default.css --watch",
     "watch:vite": "vite build --watch",

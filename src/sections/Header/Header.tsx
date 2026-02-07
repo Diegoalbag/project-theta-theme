@@ -51,28 +51,30 @@ export const Header = () => {
         </div>
 
         {/* Mobile Navigation */}
-        <div className="flex w-full flex-col justify-end gap-5 pb-2.5 md:hidden">
-          <div className="flex flex-col gap-1 md:flex-row">
-            <Link href="#features">
-              <Button variant="ghost" className="w-full md:w-auto">
-                Features
-              </Button>
-            </Link>
-            <Link href="#about">
-              <Button variant="ghost" className="w-full md:w-auto">
-                About
-              </Button>
-            </Link>
-            <Link href="#contact">
-              <Button variant="ghost" className="w-full md:w-auto">
-                Contact
-              </Button>
+        {isMenuOpen && (
+          <div className="flex w-full flex-col justify-end gap-5 pb-2.5 md:hidden">
+            <div className="flex flex-col gap-1 md:flex-row">
+              <Link href="#features">
+                <Button variant="ghost" className="w-full md:w-auto">
+                  Features
+                </Button>
+              </Link>
+              <Link href="#about">
+                <Button variant="ghost" className="w-full md:w-auto">
+                  About
+                </Button>
+              </Link>
+              <Link href="#contact">
+                <Button variant="ghost" className="w-full md:w-auto">
+                  Contact
+                </Button>
+              </Link>
+            </div>
+            <Link href="#pricing">
+              <Button className="w-full">Try for free</Button>
             </Link>
           </div>
-          <Link href="#pricing">
-            <Button className="w-full">Try for free</Button>
-          </Link>
-        </div>
+        )}
       </div>
     </nav>
   );

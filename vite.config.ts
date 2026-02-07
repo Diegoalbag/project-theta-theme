@@ -50,7 +50,7 @@ export default defineConfig({
         globals: {
           react: "React",
           "react-dom": "ReactDOM",
-          "react/jsx-runtime": "jsxRuntime",
+        "react/jsx-runtime": "jsxRuntime",
           next: "next",
           "lucide-react": "LucideReact",
           "class-variance-authority": "cva",
