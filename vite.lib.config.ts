@@ -16,6 +16,8 @@ export default defineConfig({
     },
   },
   build: {
+    // First build (vite.config.ts) outputs dist/theme.bundle.js; do not clear dist/
+    emptyOutDir: false,
     lib: {
       entry: resolve(__dirname, "src/lib-entry.ts"),
       name: "ThetaThemeDefault",
