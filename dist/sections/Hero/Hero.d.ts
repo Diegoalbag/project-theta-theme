@@ -1,9 +1,8 @@
+import { default as React } from 'react';
 export interface HeroProps {
     title?: string;
     description?: string;
-    featureOne?: string;
-    featureTwo?: string;
-    featureThree?: string;
+    renderBlocks?: () => React.ReactNode;
     primaryCtaLabel?: string;
     primaryCtaUrl?: string;
     secondaryCtaLabel?: string;
@@ -14,7 +13,7 @@ export interface HeroProps {
     };
     textAlignment?: "left" | "center" | "right";
 }
-export declare const Hero: ({ title, description, featureOne, featureTwo, featureThree, primaryCtaLabel, primaryCtaUrl, secondaryCtaLabel, secondaryCtaUrl, heroImage, textAlignment, }: HeroProps) => any;
+export declare const Hero: ({ title, description, renderBlocks, primaryCtaLabel, primaryCtaUrl, secondaryCtaLabel, secondaryCtaUrl, heroImage, textAlignment, }: HeroProps) => any;
 export declare const heroSettingsSchema: ({
     id: string;
     label: string;

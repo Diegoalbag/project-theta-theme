@@ -1,5 +1,11 @@
 import "./index.css";
-import { sectionsComponents, sectionSettingsSchemas } from "./registry";
+import {
+  sectionsComponents,
+  sectionSettingsSchemas,
+  blocksComponents,
+  blockSettingsSchemas,
+  sectionBlocksConfig,
+} from "./registry";
 export * from "./registry";
 
 const themeName = 'project-theta-theme'; // must match NEXT_PUBLIC_THEME_NAME
@@ -9,4 +15,7 @@ const themeName = 'project-theta-theme'; // must match NEXT_PUBLIC_THEME_NAME
   version: '1.0.0',
   sectionsComponents,
   sectionSettingsSchemas,
+  blocksComponents,
+  blockSettingsSchemas,
+  sectionBlocksConfig,
 };

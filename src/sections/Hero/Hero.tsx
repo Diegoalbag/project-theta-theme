@@ -1,15 +1,14 @@
+import type React from "react";
 import { Button } from "@/components/ui/button";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Check, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import type { StaticImageData } from "next/image";
 
 export interface HeroProps {
   title?: string;
   description?: string;
-  featureOne?: string;
-  featureTwo?: string;
-  featureThree?: string;
+  renderBlocks?: () => React.ReactNode;
   primaryCtaLabel?: string;
   primaryCtaUrl?: string;
   secondaryCtaLabel?: string;
@@ -24,9 +23,7 @@ export interface HeroProps {
 export const Hero = ({
   title,
   description,
-  featureOne,
-  featureTwo,
-  featureThree,
+  renderBlocks,
   primaryCtaLabel,
   primaryCtaUrl,
   secondaryCtaLabel,
@@ -62,41 +59,12 @@ export const Hero = ({
             </p>
           </div>
 
-          {/* Feature List */}
-          <div className="flex flex-col gap-2 md:gap-3">
-            {featureOne && (
-              <div className="flex items-start gap-3">
-                <div className="pt-0.5">
-                  <Check className="text-primary h-5 w-5" />
-                </div>
-                <span className="text-card-foreground text-base leading-6 font-medium">
-                  {featureOne}
-                </span>
-              </div>
-            )}
-
-            {featureTwo && (
-              <div className="flex items-start gap-3">
-                <div className="pt-0.5">
-                  <Check className="text-primary h-5 w-5" />
-                </div>
-                <span className="text-card-foreground text-base leading-6 font-medium">
-                  {featureTwo}
-                </span>
-              </div>
-            )}
-
-            {featureThree && (
-              <div className="flex items-start gap-3">
-                <div className="pt-0.5">
-                  <Check className="text-primary h-5 w-5" />
-                </div>
-                <span className="text-card-foreground text-base leading-6 font-medium">
-                  {featureThree}
-                </span>
-              </div>
-            )}
-          </div>
+          {/* Feature List (dynamic blocks) */}
+          {renderBlocks && (
+            <div className="flex flex-col gap-2 md:gap-3">
+              {renderBlocks()}
+            </div>
+          )}
 
           {/* CTA Buttons */}
           <div className="flex flex-col gap-3 sm:flex-row">
@@ -142,24 +110,6 @@ export const heroSettingsSchema = [
     type: "textarea",
     default:
       "AI that joins, transcribes, and transforms your meetings into structured knowledge",
-  },
-  {
-    id: "featureOne",
-    label: "Feature #1",
-    type: "text",
-    default: "Deal progress tracking",
-  },
-  {
-    id: "featureTwo",
-    label: "Feature #2",
-    type: "text",
-    default: "Customer sentiment analysis",
-  },
-  {
-    id: "featureThree",
-    label: "Feature #3",
-    type: "text",
-    default: "Automatic CRM updates",
   },
   {
     id: "primaryCtaLabel",
