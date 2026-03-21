@@ -1,21 +1,26 @@
 import type React from "react";
 import { Hero, heroSettingsSchema } from "./sections/Hero";
 import { Header, headerSettingsSchema } from "./sections/Header";
+import { Team, teamSettingsSchema } from "./sections/Team";
 import { FeatureBlock, featureBlockSettingsSchema } from "./blocks/Feature";
+import { TeamMemberBlock, teamMemberBlockSettingsSchema } from "./blocks/TeamMember";
 
 export const sectionsComponents = {
   hero: Hero,
   header: Header,
+  team: Team,
 };
 
 export const sectionSettingsSchemas = {
   hero: heroSettingsSchema,
   header: headerSettingsSchema,
+  team: teamSettingsSchema,
 };
 
 // Block components (Shopify-style) - add blocks here as needed
 export const blocksComponents: Record<string, React.ComponentType<Record<string, unknown>>> = {
   feature: FeatureBlock,
+  "team-member": TeamMemberBlock,
 };
 
 // Block settings schemas - keyed by block type
@@ -29,6 +34,7 @@ export const blockSettingsSchemas: Record<string, Array<{
   customType?: string;
 }>> = {
   feature: featureBlockSettingsSchema,
+  "team-member": teamMemberBlockSettingsSchema,
 };
 
 // Per-section block config: which blocks each section accepts
@@ -53,5 +59,9 @@ export const sectionBlocksConfig: Record<string, {
   hero: {
     blocks: [{ type: "@theme" }],
     maxBlocks: 10,
+  },
+  team: {
+    blocks: [{ type: "team-member" }],
+    maxBlocks: 20,
   },
 };

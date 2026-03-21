@@ -3,7 +3,7 @@ export interface FeatureBlockProps {
     blockId?: string;
     blockType?: string;
 }
-export declare const FeatureBlock: ({ feature, }: FeatureBlockProps) => any;
+export declare const FeatureBlock: ({ feature, }: FeatureBlockProps) => import("react/jsx-runtime").JSX.Element;
 export declare const featureBlockSettingsSchema: {
     id: string;
     label: string;

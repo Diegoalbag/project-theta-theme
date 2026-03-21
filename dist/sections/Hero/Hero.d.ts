@@ -13,7 +13,7 @@ export interface HeroProps {
     };
     textAlignment?: "left" | "center" | "right";
 }
-export declare const Hero: ({ title, description, renderBlocks, primaryCtaLabel, primaryCtaUrl, secondaryCtaLabel, secondaryCtaUrl, heroImage, textAlignment, }: HeroProps) => any;
+export declare const Hero: ({ title, description, renderBlocks, primaryCtaLabel, primaryCtaUrl, secondaryCtaLabel, secondaryCtaUrl, heroImage, textAlignment, }: HeroProps) => import("react/jsx-runtime").JSX.Element;
 export declare const heroSettingsSchema: ({
     id: string;
     label: string;

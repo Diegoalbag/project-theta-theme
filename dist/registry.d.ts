@@ -1,7 +1,8 @@
 import { default as React } from 'react';
 export declare const sectionsComponents: {
-    hero: ({ title, description, renderBlocks, primaryCtaLabel, primaryCtaUrl, secondaryCtaLabel, secondaryCtaUrl, heroImage, textAlignment, }: import('./sections/Hero').HeroProps) => any;
-    header: () => any;
+    hero: ({ title, description, renderBlocks, primaryCtaLabel, primaryCtaUrl, secondaryCtaLabel, secondaryCtaUrl, heroImage, textAlignment, }: import('./sections/Hero').HeroProps) => import("react/jsx-runtime").JSX.Element;
+    header: () => import("react/jsx-runtime").JSX.Element;
+    team: ({ heading, subheading, columns, backgroundColor, textAlignment, renderBlocks, }: import('./sections/Team/Team').TeamProps) => import("react/jsx-runtime").JSX.Element;
 };
 export declare const sectionSettingsSchemas: {
     hero: ({
@@ -36,6 +37,31 @@ export declare const sectionSettingsSchemas: {
         label: string;
         type: string;
     }[];
+    team: ({
+        id: string;
+        label: string;
+        type: string;
+        default: string;
+        placeholder?: undefined;
+        min?: undefined;
+        max?: undefined;
+    } | {
+        id: string;
+        label: string;
+        type: string;
+        placeholder: string;
+        default?: undefined;
+        min?: undefined;
+        max?: undefined;
+    } | {
+        id: string;
+        label: string;
+        type: string;
+        default: number;
+        min: number;
+        max: number;
+        placeholder?: undefined;
+    })[];
 };
 export declare const blocksComponents: Record<string, React.ComponentType<Record<string, unknown>>>;
 export declare const blockSettingsSchemas: Record<string, Array<{

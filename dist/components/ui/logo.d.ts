@@ -3,5 +3,5 @@ interface LogoProps {
     height?: number;
     className?: string;
 }
-export declare const Logo: ({ width, height, className }: LogoProps) => any;
+export declare const Logo: ({ width, height, className }: LogoProps) => import("react/jsx-runtime").JSX.Element;
 export {};
