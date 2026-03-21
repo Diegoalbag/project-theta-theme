@@ -173,7 +173,7 @@ export function PageRenderer({ page, themeBundleUrl, themeName, themeCssUrl }: P
   }
 
   // Sort sections by order from the template
-  const sections = page.pageTemplate?.sections || [];
+  const sections = page.page_template?.sections || [];
   const sortedSections = [...sections].sort(
     (a, b) => (a.order ?? 0) - (b.order ?? 0)
   );

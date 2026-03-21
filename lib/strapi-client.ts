@@ -67,7 +67,7 @@ const getPagesQuery = gql`
       slug
       publishedAt
       isHomepage
-      pageTemplate {
+      page_template {
         sections {
           id
           sectionKey
@@ -93,7 +93,7 @@ const getPageBySlugQuery = gql`
       slug
       publishedAt
       isHomepage
-      pageTemplate {
+      page_template {
         sections {
           id
           sectionKey
@@ -132,7 +132,7 @@ export interface StrapiPage {
   slug: string;
   publishedAt?: string | null;
   isHomepage?: boolean;
-  pageTemplate?: {
+  page_template?: {
     sections?: StrapiSection[];
   } | null;
 }
@@ -261,7 +261,7 @@ function resolveRefsInData(
 async function resolvePageMetaobjectRefs(page: StrapiPage): Promise<StrapiPage> {
   // Collect all referenced documentIds across sections and blocks
   const referencedIds = new Set<string>();
-  for (const section of page.pageTemplate?.sections ?? []) {
+  for (const section of page.page_template?.sections ?? []) {
     for (const val of Object.values(section.data)) {
       if (isMetaobjectRef(val)) referencedIds.add(val.value);
     }
@@ -283,10 +283,10 @@ async function resolvePageMetaobjectRefs(page: StrapiPage): Promise<StrapiPage> 
 
   return {
     ...page,
-    pageTemplate: page.pageTemplate
+    page_template: page.page_template
       ? {
-          ...page.pageTemplate,
-          sections: (page.pageTemplate.sections ?? []).map((section) => ({
+          ...page.page_template,
+          sections: (page.page_template.sections ?? []).map((section) => ({
             ...section,
             data: resolveRefsInData(section.data, entryMap),
             blocks: (section.blocks ?? []).map((block) => ({
@@ -295,7 +295,7 @@ async function resolvePageMetaobjectRefs(page: StrapiPage): Promise<StrapiPage> 
             })),
           })),
         }
-      : page.pageTemplate,
+      : page.page_template,
   };
 }
 
