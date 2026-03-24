@@ -67,6 +67,7 @@ const getPagesQuery = gql`
       slug
       publishedAt
       isHomepage
+      metafields
       page_template {
         sections {
           id
@@ -93,6 +94,7 @@ const getPageBySlugQuery = gql`
       slug
       publishedAt
       isHomepage
+      metafields
       page_template {
         sections {
           id
@@ -132,6 +134,7 @@ export interface StrapiPage {
   slug: string;
   publishedAt?: string | null;
   isHomepage?: boolean;
+  metafields?: Record<string, unknown> | null;
   page_template?: {
     sections?: StrapiSection[];
   } | null;
@@ -259,7 +262,7 @@ function resolveRefsInData(
  * fetch metaobject data directly via its own API client.
  */
 async function resolvePageMetaobjectRefs(page: StrapiPage): Promise<StrapiPage> {
-  // Collect all referenced documentIds across sections and blocks
+  // Collect all referenced documentIds across sections, blocks, and page metafields
   const referencedIds = new Set<string>();
   for (const section of page.page_template?.sections ?? []) {
     for (const val of Object.values(section.data)) {
@@ -270,6 +273,10 @@ async function resolvePageMetaobjectRefs(page: StrapiPage): Promise<StrapiPage> 
         if (isMetaobjectRef(val)) referencedIds.add(val.value);
       }
     }
+  }
+  // Also collect refs from page-level metafields
+  for (const val of Object.values(page.metafields ?? {})) {
+    if (isMetaobjectRef(val)) referencedIds.add(val.value);
   }
 
   if (referencedIds.size === 0) return page;
@@ -283,6 +290,9 @@ async function resolvePageMetaobjectRefs(page: StrapiPage): Promise<StrapiPage> 
 
   return {
     ...page,
+    metafields: page.metafields
+      ? resolveRefsInData(page.metafields as Record<string, unknown>, entryMap)
+      : page.metafields,
     page_template: page.page_template
       ? {
           ...page.page_template,
@@ -300,6 +310,55 @@ async function resolvePageMetaobjectRefs(page: StrapiPage): Promise<StrapiPage> 
 }
 
 /**
+ * Resolve dynamic_source typed values in a page's section/block data by substituting
+ * the referenced page metafield value in place of the source reference.
+ * Called after resolvePageMetaobjectRefs so the result can feed directly into
+ * convertStrapiDataToProps without further handling.
+ */
+function resolveDynamicSources(page: StrapiPage): StrapiPage {
+  const metafields = (page.metafields ?? {}) as Record<string, unknown>
+
+  function resolveValue(val: unknown): unknown {
+    if (
+      val !== null &&
+      typeof val === "object" &&
+      (val as Record<string, unknown>).type === "dynamic_source"
+    ) {
+      const ds = val as { type: string; value: { source: string; key: string } }
+      if (ds.value?.source === "page_metafield") {
+        return metafields[ds.value.key] ?? null
+      }
+    }
+    return val
+  }
+
+  function resolveData(data: Record<string, unknown>): Record<string, unknown> {
+    const result: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(data)) {
+      result[k] = resolveValue(v)
+    }
+    return result
+  }
+
+  if (!page.page_template) return page
+
+  return {
+    ...page,
+    page_template: {
+      ...page.page_template,
+      sections: (page.page_template.sections ?? []).map((section) => ({
+        ...section,
+        data: resolveData(section.data),
+        blocks: (section.blocks ?? []).map((block) => ({
+          ...block,
+          data: resolveData(block.data),
+        })),
+      })),
+    },
+  }
+}
+
+/**
  * Fetch a single page by slug
  */
 export async function fetchPageBySlug(slug: string): Promise<StrapiPage | null> {
@@ -312,7 +371,8 @@ export async function fetchPageBySlug(slug: string): Promise<StrapiPage | null> 
     const response = await strapiClient.request<StrapiPagesResponse>(getPageBySlugQuery, { slug });
     const page = response.pages[0] || null;
     if (!page) return null;
-    return await resolvePageMetaobjectRefs(page);
+    const withResolvedRefs = await resolvePageMetaobjectRefs(page);
+    return resolveDynamicSources(withResolvedRefs);
   } catch (error) {
     console.error(`Failed to fetch page with slug "${slug}" from Strapi:`, error);
     // During build time, return null instead of throwing to allow build to continue

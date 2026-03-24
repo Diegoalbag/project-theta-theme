@@ -242,10 +242,21 @@ export function PageRenderer({ page, themeBundleUrl, themeName, themeCssUrl }: P
 }
 
 /**
+ * Convert page metafields (Record<string, unknown>) to flat component props.
+ * Reuses convertStrapiDataToProps so all field type normalization applies.
+ */
+export function convertPageMetafields(
+  raw: Record<string, unknown> | null | undefined
+): Record<string, unknown> {
+  if (!raw) return {};
+  return convertStrapiDataToProps(raw);
+}
+
+/**
  * Convert Strapi typed data to flat component props
  * Strapi stores: { title: { type: 'text', value: 'Hello' } }
  * Components expect: { title: 'Hello' }
- * 
+ *
  * Handles all field types including images, videos, page references, etc.
  */
 function convertStrapiDataToProps(
