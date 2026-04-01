@@ -1,3 +1,4 @@
+# theta-workflow-version: 1.0.0
 # Theme Site Deployment Workflow
 #
 # This workflow expects the theme repository (source branch checked out to theme-source/)
