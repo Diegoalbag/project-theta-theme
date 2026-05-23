@@ -1,4 +1,4 @@
-# theta-workflow-version: 1.0.0
+# theta-workflow-version: 1.1.0
 # Theme Site Deployment Workflow
 #
 # This workflow expects the theme repository (source branch checked out to theme-source/)
@@ -52,6 +52,14 @@ on:
         required: false
         type: boolean
         default: false
+      callback_url:
+        description: 'URL to POST deploy status on completion (optional)'
+        required: false
+        type: string
+      callback_token:
+        description: 'Bearer token for authenticating the callback (optional)'
+        required: false
+        type: string
 
 env:
   NODE_VERSION: '20'
@@ -667,11 +675,30 @@ jobs:
           VERCEL_ORG_ID: ${{ github.event.inputs.vercel_team_id || secrets.VERCEL_TEAM_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
-      - name: Notify deployment status
-        if: always()
+      - name: Report deploy status via callback
+        if: always() && github.event.inputs.callback_url != ''
         run: |
+          CALLBACK_URL="${{ github.event.inputs.callback_url }}"
+          CALLBACK_TOKEN="${{ github.event.inputs.callback_token }}"
+
           if [ "${{ job.status }}" == "success" ]; then
-            echo "Deployment successful"
+            STATUS="ready"
           else
-            echo "Deployment failed"
+            STATUS="error"
+          fi
+
+          echo "Reporting deploy status '$STATUS' to $CALLBACK_URL"
+
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST "$CALLBACK_URL" \
+            -H "Authorization: Bearer $CALLBACK_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"status\": \"$STATUS\"}" \
+          )
+
+          echo "Callback response: HTTP $HTTP_CODE"
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "✓ Callback succeeded"
+          else
+            echo "⚠ Callback returned HTTP $HTTP_CODE (non-fatal)"
           fi
