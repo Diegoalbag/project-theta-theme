@@ -1,4 +1,4 @@
-# theta-workflow-version: 1.1.0
+# theta-workflow-version: 1.2.0
 # Theme Site Deployment Workflow
 #
 # This workflow expects the theme repository (source branch checked out to theme-source/)
@@ -12,7 +12,8 @@ name: Deploy Theme Site
 on:
   push:
     branches:
-      - '**'  # Trigger on all branches
+      - '**'
+      - '!**-build'  # Build branches are deployed via workflow_dispatch only
   workflow_dispatch:
     inputs:
       theme_id:
@@ -128,6 +129,11 @@ jobs:
           fi
           echo "✓ Theme repository structure validated"
           echo "================================"
+
+      - name: Configure git for private dependencies
+        run: |
+          git config --global url."https://x-access-token:${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}@github.com/".insteadOf "ssh://git@github.com/"
+          git config --global url."https://x-access-token:${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}@github.com/".insteadOf "git@github.com:"
 
       - name: Build theme bundle
         id: build-theme
