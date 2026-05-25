@@ -2,8 +2,6 @@ import type React from "react";
 import { Button } from "@/components/ui/button";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { ArrowRight } from "lucide-react";
-import Image from "next/image";
-import type { StaticImageData } from "next/image";
 
 export interface HeroProps {
   title?: string;
@@ -83,12 +81,10 @@ export const Hero = ({
         {/* Right Column */}
         <div className="w-full flex-1">
           <AspectRatio ratio={1 / 1}>
-            <Image
+            <img
               src={heroImage?.url || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Hero-EK6lJQh9Tq3HAhrRx6QQGhjNwND9Gs.png"}
               alt="Hero visual"
-              fill
-              priority
-              className="h-full w-full rounded-xl object-cover"
+              className="absolute inset-0 h-full w-full rounded-xl object-cover"
             />
           </AspectRatio>
         </div>
@@ -142,10 +138,8 @@ export const heroSettingsSchema = [
     label: "Hero image",
     type: "image_picker",
     default: {
-      src: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Hero-EK6lJQh9Tq3HAhrRx6QQGhjNwND9Gs.png",
-      alt: "Hero visual",
-      width: 1000,
-      height: 1000,
+      id: null,
+      url: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Hero-EK6lJQh9Tq3HAhrRx6QQGhjNwND9Gs.png",
     },
     info: "Upload or select an image for the hero section",
   },

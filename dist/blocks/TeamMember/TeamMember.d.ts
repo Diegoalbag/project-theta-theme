@@ -1,13 +1,14 @@
-export interface TeamMemberBlockProps {
-    teamMember?: {
-        name?: string;
-        last_name?: string;
-        role?: string;
-        profile_picture?: {
-            id?: number;
-            url?: string;
-        };
+export interface TeamMemberData {
+    name?: string;
+    last_name?: string;
+    role?: string;
+    profile_picture?: {
+        id?: number;
+        url?: string;
     };
+}
+export interface TeamMemberBlockProps {
+    teamMember?: TeamMemberData | string;
     blockId?: string;
     blockType?: string;
 }

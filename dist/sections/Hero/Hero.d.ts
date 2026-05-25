@@ -33,10 +33,8 @@ export declare const heroSettingsSchema: ({
     label: string;
     type: string;
     default: {
-        src: string;
-        alt: string;
-        width: number;
-        height: number;
+        id: any;
+        url: string;
     };
     info: string;
     placeholder?: undefined;
