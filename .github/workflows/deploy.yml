@@ -1,4 +1,4 @@
-# theta-workflow-version: 1.2.0
+# theta-workflow-version: 1.2.1
 # Theme Site Deployment Workflow
 #
 # This workflow expects the theme repository (source branch checked out to theme-source/)
@@ -54,11 +54,11 @@ on:
         type: boolean
         default: false
       callback_url:
-        description: 'URL to POST deploy status on completion (optional)'
+        description: 'Tenant-scoped URL to POST deploy status on completion — /api/deploy/<teamId>/<themeId>/status (supplied by the deploy route; optional)'
         required: false
         type: string
       callback_token:
-        description: 'Bearer token for authenticating the callback (optional)'
+        description: 'Bearer HMAC token binding (teamId,themeId,deploymentId) for authenticating the callback (optional)'
         required: false
         type: string
 
@@ -686,6 +686,16 @@ jobs:
         run: |
           CALLBACK_URL="${{ github.event.inputs.callback_url }}"
           CALLBACK_TOKEN="${{ github.event.inputs.callback_token }}"
+
+          # WR-04 (partial): workflow_dispatch inputs are NOT masked the way
+          # secrets.* are, so the tenant-scoped HMAC callback token would
+          # otherwise be visible in run metadata/logs. Register it as a masked
+          # value so it is redacted from any subsequent log line, and never echo
+          # it. (Full fix — move the credential to a repo/environment secret —
+          # is deferred as a design decision; see REVIEW-FIX.md WR-04.)
+          if [ -n "$CALLBACK_TOKEN" ]; then
+            echo "::add-mask::$CALLBACK_TOKEN"
+          fi
 
           if [ "${{ job.status }}" == "success" ]; then
             STATUS="ready"
