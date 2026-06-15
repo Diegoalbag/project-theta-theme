@@ -1,4 +1,4 @@
-# theta-workflow-version: 1.2.1
+# theta-workflow-version: 1.3.0
 # Theme Site Deployment Workflow
 #
 # This workflow expects the theme repository (source branch checked out to theme-source/)
@@ -42,6 +42,10 @@ on:
         type: string
       vercel_team_id:
         description: 'Vercel Team ID (optional)'
+        required: false
+        type: string
+      vercel_project_id:
+        description: 'Platform Vercel project id (theta-<teamId>-<themeId>) the deploy must target'
         required: false
         type: string
       subdomain:
@@ -663,23 +667,48 @@ jobs:
           fi
 
       - name: Deploy to Vercel
+        id: deploy-vercel
         run: |
           # Deploy the pre-built standalone output
           # Note: Environment variables are already embedded in the build from the previous step
           # Use --prebuilt flag if available to ensure Vercel uses our build
           echo "Deploying to Vercel..."
-          echo "Project ID: ${{ secrets.VERCEL_PROJECT_ID }}"
-          
-          # Try to use --prebuilt if the CLI supports it, otherwise use regular deploy
-          vercel deploy --prod \
+          # Echo the resolved project id (input-or-secret) so the run log shows which
+          # platform project was targeted. NEVER echo the vercel_token.
+          echo "Project ID: $VERCEL_PROJECT_ID"
+
+          # Capture the deployment URL that `vercel deploy` prints as its last stdout
+          # line. Run the prebuilt path first; on failure fall back to a plain deploy.
+          # Either branch's stdout is captured so we can post the real URL back in the
+          # callback. A parse failure leaves DEPLOY_URL empty (the callback degrades to
+          # omitting deploymentUrl rather than failing the deploy).
+          DEPLOY_OUTPUT=""
+          if DEPLOY_OUTPUT=$(vercel deploy --prod \
             --token=${{ github.event.inputs.vercel_token || secrets.VERCEL_TOKEN }} \
             --yes \
-            --prebuilt || vercel deploy --prod \
-            --token=${{ github.event.inputs.vercel_token || secrets.VERCEL_TOKEN }} \
-            --yes
+            --prebuilt 2>&1); then
+            echo "$DEPLOY_OUTPUT"
+          else
+            echo "$DEPLOY_OUTPUT"
+            echo "Prebuilt deploy failed; retrying without --prebuilt..."
+            DEPLOY_OUTPUT=$(vercel deploy --prod \
+              --token=${{ github.event.inputs.vercel_token || secrets.VERCEL_TOKEN }} \
+              --yes)
+            echo "$DEPLOY_OUTPUT"
+          fi
+
+          # Extract the last https://...vercel.app URL printed by the CLI.
+          DEPLOY_URL=$(echo "$DEPLOY_OUTPUT" | grep -Eo 'https://[a-zA-Z0-9._/-]+' | tail -n 1 || true)
+          if [ -n "$DEPLOY_URL" ]; then
+            echo "Captured deployment URL: $DEPLOY_URL"
+            echo "deployment_url=$DEPLOY_URL" >> "$GITHUB_OUTPUT"
+          else
+            echo "No deployment URL parsed from CLI output (callback will omit deploymentUrl)."
+            echo "deployment_url=" >> "$GITHUB_OUTPUT"
+          fi
         env:
           VERCEL_ORG_ID: ${{ github.event.inputs.vercel_team_id || secrets.VERCEL_TEAM_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_PROJECT_ID: ${{ github.event.inputs.vercel_project_id || secrets.VERCEL_PROJECT_ID }}
 
       - name: Report deploy status via callback
         if: always() && github.event.inputs.callback_url != ''
@@ -703,13 +732,25 @@ jobs:
             STATUS="error"
           fi
 
-          echo "Reporting deploy status '$STATUS' to $CALLBACK_URL"
+          # Real Vercel deployment URL captured by the Deploy-to-Vercel step. The
+          # receiver's deployStatusCallbackSchema requires an absolute https:// URL
+          # (WR-03 anti-injection guard), so only include deploymentUrl when STATUS is
+          # ready AND the captured URL begins with https:// — otherwise preserve the
+          # status-only body (today's behavior) so error/empty-URL cases still report.
+          DEPLOY_URL="${{ steps.deploy-vercel.outputs.deployment_url }}"
+          if [ "$STATUS" = "ready" ] && [ "${DEPLOY_URL#https://}" != "$DEPLOY_URL" ]; then
+            PAYLOAD="{\"status\": \"$STATUS\", \"deploymentUrl\": \"$DEPLOY_URL\"}"
+            echo "Reporting deploy status '$STATUS' with deploymentUrl to $CALLBACK_URL"
+          else
+            PAYLOAD="{\"status\": \"$STATUS\"}"
+            echo "Reporting deploy status '$STATUS' to $CALLBACK_URL"
+          fi
 
           HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
             -X POST "$CALLBACK_URL" \
             -H "Authorization: Bearer $CALLBACK_TOKEN" \
             -H "Content-Type: application/json" \
-            -d "{\"status\": \"$STATUS\"}" \
+            -d "$PAYLOAD" \
           )
 
           echo "Callback response: HTTP $HTTP_CODE"
