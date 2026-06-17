@@ -3,8 +3,15 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import dts from "vite-plugin-dts";
 import { resolve } from 'path';
+import { readFileSync } from 'node:fs';
+
+const pkg = JSON.parse(readFileSync(resolve(__dirname, "package.json"), "utf-8"));
 
 export default defineConfig({
+  define: {
+    // Must be JSON.stringify'd — `define` does a raw text substitution.
+    __THEME_NAME__: JSON.stringify(pkg.name),
+  },
   plugins: [
     react(),
     tailwindcss(),

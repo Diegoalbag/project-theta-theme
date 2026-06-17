@@ -8,7 +8,8 @@ import {
 } from "./registry";
 export * from "./registry";
 
-const themeName = 'project-theta-theme'; // must match NEXT_PUBLIC_THEME_NAME
+declare const __THEME_NAME__: string;
+const themeName = __THEME_NAME__; // injected from package.json name at build (must match NEXT_PUBLIC_THEME_NAME)
 (window as any).__THETA_THEMES__ = (window as any).__THETA_THEMES__ || {};
 (window as any).__THETA_THEMES__[themeName] = {
   name: themeName,
