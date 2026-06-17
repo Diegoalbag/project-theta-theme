@@ -1,7 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import dts from "vite-plugin-dts";
 import { resolve } from 'path';
 import { readFileSync } from 'node:fs';
 
@@ -15,14 +14,6 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    dts({
-      tsconfigPath: "tsconfig.json",
-      insertTypesEntry: true,
-      alias: {
-        "@": resolve(__dirname, "src"),
-      },
-      outputDir: "dist",
-    }),
   ],
   resolve: {
     alias: {
@@ -31,7 +22,7 @@ export default defineConfig({
   },
   publicDir: "public",
   build: {
-    emptyOutDir: false,
+    emptyOutDir: true,
     lib: {
       entry: resolve(__dirname, "src/index.ts"),
       name: "ThetaThemeDefault",

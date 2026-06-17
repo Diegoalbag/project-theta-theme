@@ -17,16 +17,14 @@
     "./assets/*": "./dist/*"
   },
   "scripts": {
-    "build": "vite build && vite build --config vite.lib.config.ts && tailwindcss -i ./src/index.css -o ./dist/theta-theme-default.css --minify && yarn test:contract",
+    "build": "vite build && vite build --config vite.lib.config.ts && yarn test:contract",
     "build:vite": "vite build",
     "test": "vitest run",
     "test:contract": "vitest run test/registration-contract.test.ts",
-    "watch": "node scripts/sync-to-node-modules.js & vite build --watch & vite build --config vite.lib.config.ts --watch & tailwindcss -i ./src/index.css -o ./dist/theta-theme-default.css --watch",
-    "watch:vite": "vite build --watch",
-    "watch:css": "tailwindcss -i ./src/index.css -o ./dist/theta-theme-default.css --watch"
+    "watch": "vite build --watch",
+    "watch:vite": "vite build --watch"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.1.17",
     "@tailwindcss/vite": "^4.1.17",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
