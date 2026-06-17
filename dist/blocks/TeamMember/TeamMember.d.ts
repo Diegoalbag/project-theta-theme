@@ -12,7 +12,7 @@ export interface TeamMemberBlockProps {
     blockId?: string;
     blockType?: string;
 }
-export declare const TeamMemberBlock: ({ teamMember }: TeamMemberBlockProps) => import("react/jsx-runtime").JSX.Element;
+export declare const TeamMemberBlock: ({ teamMember }: TeamMemberBlockProps) => import("react").JSX.Element;
 export declare const teamMemberBlockSettingsSchema: {
     id: string;
     label: string;

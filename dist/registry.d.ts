@@ -1,8 +1,8 @@
 import { default as React } from 'react';
 export declare const sectionsComponents: {
-    hero: ({ title, description, renderBlocks, primaryCtaLabel, primaryCtaUrl, secondaryCtaLabel, secondaryCtaUrl, heroImage, textAlignment, }: import('./sections/Hero').HeroProps) => import("react/jsx-runtime").JSX.Element;
-    header: () => import("react/jsx-runtime").JSX.Element;
-    team: ({ heading, subheading, columns, backgroundColor, textAlignment, renderBlocks, }: import('./sections/Team/Team').TeamProps) => import("react/jsx-runtime").JSX.Element;
+    hero: ({ title, description, renderBlocks, primaryCtaLabel, primaryCtaUrl, secondaryCtaLabel, secondaryCtaUrl, heroImage, textAlignment, }: import('./sections/Hero').HeroProps) => React.JSX.Element;
+    header: () => React.JSX.Element;
+    team: ({ heading, subheading, columns, backgroundColor, textAlignment, renderBlocks, }: import('./sections/Team/Team').TeamProps) => React.JSX.Element;
 };
 export declare const sectionSettingsSchemas: {
     hero: ({

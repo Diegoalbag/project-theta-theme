@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "../../components/ui/logo";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
-import Link from "next/link";
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -13,9 +12,9 @@ export const Header = () => {
     <nav className="bg-background sticky top-0 isolate z-50 border-b py-3.5 md:py-4">
       <div className="relative container m-auto flex flex-col justify-between gap-4 px-6 md:flex-row md:items-center md:gap-6">
         <div className="flex items-center justify-between">
-          <Link href="/">
+          <a href="/">
             <Logo />
-          </Link>
+          </a>
           <Button
             variant="ghost"
             className="flex size-9 items-center justify-center md:hidden"
@@ -29,50 +28,50 @@ export const Header = () => {
         {/* Desktop Navigation */}
         <div className="hidden w-full flex-row justify-end gap-5 md:flex">
           <div className="flex flex-col gap-1 md:flex-row">
-            <Link href="#features">
+            <a href="#features">
               <Button variant="ghost" className="w-full md:w-auto">
                 Features
               </Button>
-            </Link>
-            <Link href="#about">
+            </a>
+            <a href="#about">
               <Button variant="ghost" className="w-full md:w-auto">
                 About
               </Button>
-            </Link>
-            <Link href="#contact">
+            </a>
+            <a href="#contact">
               <Button variant="ghost" className="w-full md:w-auto">
                 Contact
               </Button>
-            </Link>
+            </a>
           </div>
-          <Link href="#pricing">
+          <a href="#pricing">
             <Button>Try for free</Button>
-          </Link>
+          </a>
         </div>
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="flex w-full flex-col justify-end gap-5 pb-2.5 md:hidden">
             <div className="flex flex-col gap-1 md:flex-row">
-              <Link href="#features">
+              <a href="#features">
                 <Button variant="ghost" className="w-full md:w-auto">
                   Features
                 </Button>
-              </Link>
-              <Link href="#about">
+              </a>
+              <a href="#about">
                 <Button variant="ghost" className="w-full md:w-auto">
                   About
                 </Button>
-              </Link>
-              <Link href="#contact">
+              </a>
+              <a href="#contact">
                 <Button variant="ghost" className="w-full md:w-auto">
                   Contact
                 </Button>
-              </Link>
+              </a>
             </div>
-            <Link href="#pricing">
+            <a href="#pricing">
               <Button className="w-full">Try for free</Button>
-            </Link>
+            </a>
           </div>
         )}
       </div>

@@ -9,7 +9,7 @@ export interface TeamProps {
     sectionId?: string;
     sectionName?: string;
 }
-export declare const Team: ({ heading, subheading, columns, backgroundColor, textAlignment, renderBlocks, }: TeamProps) => import("react/jsx-runtime").JSX.Element;
+export declare const Team: ({ heading, subheading, columns, backgroundColor, textAlignment, renderBlocks, }: TeamProps) => React.JSX.Element;
 export declare const teamSettingsSchema: ({
     id: string;
     label: string;
