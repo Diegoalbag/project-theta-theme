@@ -24,6 +24,9 @@ export default defineConfig({
   },
   publicDir: "public",
   build: {
+    watch: {
+      exclude: ['dist/**'],
+    },
     emptyOutDir: false,
     lib: {
       entry: resolve(__dirname, "src/index.ts"),

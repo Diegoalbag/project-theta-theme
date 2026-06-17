@@ -16,6 +16,9 @@ export default defineConfig({
     },
   },
   build: {
+    watch: {
+      exclude: ['dist/**'],
+    },
     // First build (vite.config.ts) outputs dist/theme.bundle.js; do not clear dist/
     emptyOutDir: false,
     lib: {
