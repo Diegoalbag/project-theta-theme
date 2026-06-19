@@ -172,8 +172,13 @@ export function PageRenderer({ page, themeBundleUrl, themeName, themeCssUrl }: P
     );
   }
 
-  // Sort sections by order from the template
-  const sections = page.page_template?.sections || [];
+  // Sort sections by order from the template. page_template is the liveTheme-bound
+  // single template after resolvePageForLiveTheme, but the type is a manyToMany union
+  // (D-14) — coerce array → first defensively.
+  const template = Array.isArray(page.page_template)
+    ? page.page_template[0]
+    : page.page_template;
+  const sections = template?.sections || [];
   const sortedSections = [...sections].sort(
     (a, b) => (a.order ?? 0) - (b.order ?? 0)
   );
@@ -190,14 +195,14 @@ export function PageRenderer({ page, themeBundleUrl, themeName, themeCssUrl }: P
           : null;
 
         if (!SectionComponent) {
+          // D-12 (MT-09): an orphaned section — its key is absent from the loaded
+          // theme's sectionsComponents manifest — is SKIPPED (render nothing) on the
+          // live public site. Never throw, never show debug chrome to end users. The
+          // pure predicate lives in @/lib/customizer/orphan-section; the deployed
+          // theme-site is tsconfig-excluded so the same skip behavior is inlined here.
+          // Keep the console.warn for debuggability.
           console.warn(`Section component not found: ${section.sectionKey}`);
-          return (
-            <div key={section.id || index} className="p-4 border border-dashed">
-              <p className="text-sm text-muted-foreground">
-                Section "{section.sectionKey}" not found in theme
-              </p>
-            </div>
-          );
+          return null;
         }
 
         // Convert Strapi data to component props

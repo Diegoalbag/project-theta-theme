@@ -1,5 +1,6 @@
 import { GraphQLClient } from "graphql-request";
 import { gql } from "graphql-request";
+import { resolvePageForLiveTheme } from "./live-resolve";
 
 // Helper function to normalize URLs - ensures they have a protocol
 const normalizeUrl = (url: string): string => {
@@ -86,8 +87,15 @@ const getPagesQuery = gql`
   }
 `;
 
+// liveTheme-filtered single-page query (D-04/D-05/MT-04). `$liveTheme` threads the
+// current Site.liveTheme documentId; `page_template` is an inline-filtered array
+// (manyToMany, D-14) so a theme-agnostic page surfaces only the template bound to
+// the live theme. Each template carries `theme { documentId }` so the AUTHORITATIVE
+// JS resolver (resolvePageForLiveTheme) can re-select correctly even if Strapi does
+// not honor the inline relation filter (A2 fallback) — correctness never depends on
+// the GraphQL filter.
 const getPageBySlugQuery = gql`
-  query GetPageBySlug($slug: String!) {
+  query GetPageBySlug($slug: String!, $liveTheme: ID!) {
     pages(filters: { slug: { eq: $slug } }) {
       documentId
       title
@@ -95,7 +103,11 @@ const getPageBySlugQuery = gql`
       publishedAt
       isHomepage
       metafields
-      page_template {
+      page_template(filters: { theme: { documentId: { eq: $liveTheme } } }) {
+        documentId
+        theme {
+          documentId
+        }
         sections {
           id
           sectionKey
@@ -108,6 +120,56 @@ const getPageBySlugQuery = gql`
             data
           }
         }
+      }
+    }
+  }
+`;
+
+// A2 FALLBACK query: identical to getPageBySlugQuery but WITHOUT the inline
+// relation filter. Used only if the filtered query errors on the inline filter
+// syntax — resolvePageForLiveTheme still selects the liveTheme-bound template in JS.
+const getPageBySlugUnfilteredQuery = gql`
+  query GetPageBySlugUnfiltered($slug: String!) {
+    pages(filters: { slug: { eq: $slug } }) {
+      documentId
+      title
+      slug
+      publishedAt
+      isHomepage
+      metafields
+      page_template {
+        documentId
+        theme {
+          documentId
+        }
+        sections {
+          id
+          sectionKey
+          order
+          data
+          blocks {
+            id
+            blockType
+            order
+            data
+          }
+        }
+      }
+    }
+  }
+`;
+
+// Site.liveTheme read (V4): uses the public read-only NEXT_PUBLIC_STRAPI_TOKEN —
+// a read is fine on it; no privileged write exists in this scaffold. Selects the
+// fields the bundle resolver needs (name + builtAssetUrl) plus documentId for the
+// page-template binding filter.
+const getSiteLiveThemeQuery = gql`
+  query GetSiteLiveTheme {
+    site {
+      liveTheme {
+        documentId
+        name
+        builtAssetUrl
       }
     }
   }
@@ -128,6 +190,13 @@ export interface StrapiSection {
   blocks?: StrapiBlock[];
 }
 
+/** A theme-scoped template bound to a page (D-05/D-14). */
+export interface StrapiPageTemplate {
+  documentId?: string;
+  theme?: { documentId?: string | null } | null;
+  sections?: StrapiSection[];
+}
+
 export interface StrapiPage {
   documentId: string;
   title: string;
@@ -135,13 +204,27 @@ export interface StrapiPage {
   publishedAt?: string | null;
   isHomepage?: boolean;
   metafields?: Record<string, unknown> | null;
-  page_template?: {
-    sections?: StrapiSection[];
-  } | null;
+  // manyToMany (D-14): the raw fetch can surface an ARRAY of theme-scoped templates.
+  // resolvePageForLiveTheme narrows this to the SINGLE liveTheme-bound template
+  // before render, so downstream consumers see a single object.
+  page_template?: StrapiPageTemplate | StrapiPageTemplate[] | null;
 }
 
 export interface StrapiPagesResponse {
   pages: StrapiPage[];
+}
+
+/** Site.liveTheme shape (the live pointer + bundle inputs). */
+export interface StrapiSite {
+  liveTheme?: {
+    documentId: string;
+    name?: string | null;
+    builtAssetUrl?: string | null;
+  } | null;
+}
+
+export interface StrapiSiteResponse {
+  site: StrapiSite | null;
 }
 
 /**
@@ -255,6 +338,18 @@ function resolveRefsInData(
 }
 
 /**
+ * Coerce the (array | single) page_template union into the single bound template.
+ * After resolvePageForLiveTheme narrows the page this is always a single object, but
+ * these resolvers may also be reached defensively — pick the first if an array slips
+ * through.
+ */
+function singlePageTemplate(page: StrapiPage): StrapiPageTemplate | null {
+  const tmpl = page.page_template;
+  if (tmpl == null) return null;
+  return Array.isArray(tmpl) ? tmpl[0] ?? null : tmpl;
+}
+
+/**
  * Resolve all metaobject_ref fields in a page by fetching the referenced entries
  * and replacing refs with the actual entry data (push model for MVP).
  *
@@ -262,9 +357,10 @@ function resolveRefsInData(
  * fetch metaobject data directly via its own API client.
  */
 async function resolvePageMetaobjectRefs(page: StrapiPage): Promise<StrapiPage> {
+  const template = singlePageTemplate(page);
   // Collect all referenced documentIds across sections, blocks, and page metafields
   const referencedIds = new Set<string>();
-  for (const section of page.page_template?.sections ?? []) {
+  for (const section of template?.sections ?? []) {
     for (const val of Object.values(section.data)) {
       if (isMetaobjectRef(val)) referencedIds.add(val.value);
     }
@@ -293,10 +389,10 @@ async function resolvePageMetaobjectRefs(page: StrapiPage): Promise<StrapiPage> 
     metafields: page.metafields
       ? resolveRefsInData(page.metafields as Record<string, unknown>, entryMap)
       : page.metafields,
-    page_template: page.page_template
+    page_template: template
       ? {
-          ...page.page_template,
-          sections: (page.page_template.sections ?? []).map((section) => ({
+          ...template,
+          sections: (template.sections ?? []).map((section) => ({
             ...section,
             data: resolveRefsInData(section.data, entryMap),
             blocks: (section.blocks ?? []).map((block) => ({
@@ -340,13 +436,14 @@ function resolveDynamicSources(page: StrapiPage): StrapiPage {
     return result
   }
 
-  if (!page.page_template) return page
+  const template = singlePageTemplate(page)
+  if (!template) return page
 
   return {
     ...page,
     page_template: {
-      ...page.page_template,
-      sections: (page.page_template.sections ?? []).map((section) => ({
+      ...template,
+      sections: (template.sections ?? []).map((section) => ({
         ...section,
         data: resolveData(section.data),
         blocks: (section.blocks ?? []).map((block) => ({
@@ -359,7 +456,38 @@ function resolveDynamicSources(page: StrapiPage): StrapiPage {
 }
 
 /**
- * Fetch a single page by slug
+ * Fetch the Site singleton's liveTheme pointer (D-04). Returns the live theme's
+ * documentId / name / builtAssetUrl, or null when unset (D-09 ambiguous tenant) or
+ * unconfigured. Read-only path: uses the public NEXT_PUBLIC_STRAPI_TOKEN (V4).
+ */
+export async function fetchSite(): Promise<StrapiSite | null> {
+  if (!graphqlEndpoint) {
+    console.warn("Strapi GraphQL endpoint not configured. Cannot fetch site.");
+    return null;
+  }
+
+  try {
+    const response = await strapiClient.request<StrapiSiteResponse>(getSiteLiveThemeQuery);
+    return response.site ?? null;
+  } catch (error) {
+    console.error("Failed to fetch site liveTheme from Strapi:", error);
+    // Build-time-safe: never throw, let callers fall back to env.
+    return null;
+  }
+}
+
+/**
+ * Fetch a single page by slug, resolved STRICTLY through Site.liveTheme (D-04/MT-04).
+ *
+ * Reads Site.liveTheme FIRST; returns null (→ the tenant site's existing 404) when:
+ *   - liveTheme is unset (D-04: nothing renders publicly), or
+ *   - no template is bound to the live theme (D-06: missing binding → 404).
+ *
+ * The liveTheme-filtered query is threaded with `$liveTheme`, but the AUTHORITATIVE
+ * selection is the JS resolvePageForLiveTheme — correctness does NOT depend on Strapi
+ * honoring the inline relation filter (A2). If the filtered query outright errors on
+ * the inline filter syntax, we fall back to the unfiltered query and let the JS
+ * resolver pick the bound template.
  */
 export async function fetchPageBySlug(slug: string): Promise<StrapiPage | null> {
   if (!graphqlEndpoint) {
@@ -368,9 +496,37 @@ export async function fetchPageBySlug(slug: string): Promise<StrapiPage | null> 
   }
 
   try {
-    const response = await strapiClient.request<StrapiPagesResponse>(getPageBySlugQuery, { slug });
-    const page = response.pages[0] || null;
+    // D-04: read the live pointer first. No live theme → nothing public.
+    const site = await fetchSite();
+    if (!site?.liveTheme) return null;
+
+    let response: StrapiPagesResponse;
+    try {
+      response = await strapiClient.request<StrapiPagesResponse>(getPageBySlugQuery, {
+        slug,
+        liveTheme: site.liveTheme.documentId,
+      });
+    } catch (filterError) {
+      // A2 fallback: the inline relation-filter syntax may not be honored by this
+      // Strapi version. Re-fetch unfiltered and let the JS resolver pick the
+      // liveTheme-bound template (correctness is independent of the GraphQL filter).
+      console.warn(
+        "liveTheme-filtered page query failed; falling back to unfiltered query (A2).",
+        filterError instanceof Error ? filterError.message : String(filterError)
+      );
+      response = await strapiClient.request<StrapiPagesResponse>(
+        getPageBySlugUnfilteredQuery,
+        { slug }
+      );
+    }
+
+    const rawPage = response.pages[0] || null;
+    if (!rawPage) return null;
+
+    // AUTHORITATIVE liveTheme binding pick (D-05). null → no binding → 404 (D-06).
+    const page = resolvePageForLiveTheme(rawPage, site) as StrapiPage | null;
     if (!page) return null;
+
     const withResolvedRefs = await resolvePageMetaobjectRefs(page);
     return resolveDynamicSources(withResolvedRefs);
   } catch (error) {
