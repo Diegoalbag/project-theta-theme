@@ -3,6 +3,8 @@ export interface TeamMemberData {
   last_name?: string;
   role?: string;
   profile_picture?: { id?: number; url?: string };
+  // Defensive marker the platform stamps when a referenced entry can't be resolved.
+  __missing?: boolean;
 }
 
 export interface TeamMemberBlockProps {
@@ -12,9 +14,24 @@ export interface TeamMemberBlockProps {
   blockType?: string;
 }
 
+// True when the resolved data object carries no meaningful display fields, so the
+// real-render branch would produce a blank card. An empty `{}` (the pre-fix
+// quick-create shape) and a `{ __missing: true }` marker are truthy objects, so
+// they slip past the falsy/string guard — treat them as placeholder data.
+const hasNoDisplayFields = (d: TeamMemberData): boolean =>
+  !d.name && !d.last_name && !d.role && !d.profile_picture;
+
 export const TeamMemberBlock = ({ teamMember }: TeamMemberBlockProps) => {
-  // In the customizer the platform passes a raw documentId string — show a placeholder
-  if (!teamMember || typeof teamMember === "string") {
+  // Show the placeholder when:
+  //  - the platform passes a raw documentId string (customizer), or value is falsy
+  //  - the resolved object is explicitly marked __missing, or
+  //  - the resolved object has no meaningful display fields (empty/partial data)
+  if (
+    !teamMember ||
+    typeof teamMember === "string" ||
+    teamMember.__missing ||
+    hasNoDisplayFields(teamMember)
+  ) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card p-6 text-center shadow-sm">
         <div className="bg-muted h-20 w-20 rounded-full" />
