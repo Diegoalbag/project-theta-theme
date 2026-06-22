@@ -59,9 +59,7 @@ export const Hero = ({
 
           {/* Feature List (dynamic blocks) */}
           {renderBlocks && (
-            <div className="flex flex-col gap-2 md:gap-3">
-              {renderBlocks()}
-            </div>
+            <div className="flex flex-col gap-2 md:gap-3">{renderBlocks()}</div>
           )}
 
           {/* CTA Buttons */}
@@ -82,7 +80,10 @@ export const Hero = ({
         <div className="w-full flex-1">
           <AspectRatio ratio={1 / 1}>
             <img
-              src={heroImage?.url || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Hero-EK6lJQh9Tq3HAhrRx6QQGhjNwND9Gs.png"}
+              src={
+                heroImage?.url ||
+                "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Hero-EK6lJQh9Tq3HAhrRx6QQGhjNwND9Gs.png"
+              }
               alt="Hero visual"
               className="absolute inset-0 h-full w-full rounded-xl object-cover"
             />
