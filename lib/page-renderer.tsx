@@ -103,19 +103,24 @@ interface PageRendererProps {
   page: StrapiPage;
   themeBundleUrl: string;
   themeName: string;
+  /**
+   * Optional URL for the theme's CSS. If not set, derived from themeBundleUrl
+   * (.js → .css). Kept optional so this component stays compatible with both the
+   * server-stylesheet path in app/[slug]/page.tsx and older callers that pass it.
+   */
+  themeCssUrl?: string;
 }
 
 /**
  * Component that renders a page using theme components.
  *
- * The theme CSS + bundle are eager-loaded from the server-rendered HTML
- * (see app/[slug]/page.tsx), so this component does NOT inject the stylesheet
- * and does NOT paint a "Loading…" screen — that combination was the source of
- * the load flash on the hosted site. While the bundle finishes downloading we
- * render a silent, full-height placeholder that simply shows the (already
- * server-themed) page background.
+ * Flash fix: this no longer paints a "Loading theme…" screen — while the bundle
+ * downloads it renders a silent, full-height placeholder. The stylesheet is
+ * injected idempotently (skipped if app/[slug]/page.tsx already emitted it in the
+ * server HTML), and theme state is seeded from the loader cache so client-side
+ * navigations paint instantly.
  */
-export function PageRenderer({ page, themeBundleUrl, themeName }: PageRendererProps) {
+export function PageRenderer({ page, themeBundleUrl, themeName, themeCssUrl }: PageRendererProps) {
   // Seed from the loader cache synchronously so an already-loaded theme (e.g. a
   // client-side navigation between pages) renders on the first paint with no flash.
   const [themeModule, setThemeModule] = useState<LoadedThemeModule | null>(() =>
@@ -123,6 +128,22 @@ export function PageRenderer({ page, themeBundleUrl, themeName }: PageRendererPr
   );
   const [loading, setLoading] = useState(() => getLoadedTheme(themeName) === null);
   const [error, setError] = useState<string | null>(null);
+
+  // Inject the theme stylesheet — idempotently. If the server already emitted a
+  // <link data-theme-stylesheet="…"> (see app/[slug]/page.tsx) we skip, so there
+  // is never a duplicate; if it didn't (older page.tsx), we inject it here.
+  const effectiveCssUrl =
+    themeCssUrl ?? (themeBundleUrl ? themeBundleUrl.replace(/\.js$/i, ".css") : undefined);
+  useEffect(() => {
+    if (!effectiveCssUrl || typeof document === "undefined") return;
+    const selector = `link[data-theme-stylesheet="${CSS.escape(themeName)}"]`;
+    if (document.querySelector(selector)) return;
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = effectiveCssUrl;
+    link.setAttribute("data-theme-stylesheet", themeName);
+    document.head.appendChild(link);
+  }, [effectiveCssUrl, themeName]);
 
   useEffect(() => {
     // Check cache first
@@ -133,7 +154,7 @@ export function PageRenderer({ page, themeBundleUrl, themeName }: PageRendererPr
       return;
     }
 
-    // Load theme bundle (already preloaded by the server-rendered <link>, so this
+    // Load theme bundle (already preloaded via <link rel="preload">, so this
     // resolves from cache almost immediately).
     loadThemeFromUrl(themeBundleUrl, themeName)
       .then((module) => {
@@ -148,9 +169,14 @@ export function PageRenderer({ page, themeBundleUrl, themeName }: PageRendererPr
   }, [themeBundleUrl, themeName]);
 
   if (loading) {
-    // Silent placeholder — no "Loading…" text. The server-rendered stylesheet
-    // already themes the background, so this reads as the page simply painting in.
-    return <div className="min-h-screen" aria-hidden="true" />;
+    // Silent placeholder — no "Loading…" text. Also eagerly preload the bundle so
+    // the download starts immediately even when page.tsx didn't emit a preload.
+    return (
+      <>
+        <link rel="preload" as="script" href={themeBundleUrl} crossOrigin="anonymous" />
+        <div className="min-h-screen" aria-hidden="true" />
+      </>
+    );
   }
 
   if (error || !themeModule) {
