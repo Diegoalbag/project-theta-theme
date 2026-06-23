@@ -115,9 +115,10 @@ interface PageRendererProps {
  * Component that renders a page using theme components.
  *
  * Flash fix: this no longer paints a "Loading theme…" screen — while the bundle
- * downloads it renders a silent, full-height placeholder. The stylesheet is
- * injected idempotently (skipped if app/[slug]/page.tsx already emitted it in the
- * server HTML), and theme state is seeded from the loader cache so client-side
+ * downloads it renders a silent, full-height placeholder. The theme stylesheet is
+ * rendered declaratively with a `precedence`, so React 19 hoists it into the
+ * server-rendered <head> as a render-blocking resource (no flash of unstyled
+ * content), and theme state is seeded from the loader cache so client-side
  * navigations paint instantly.
  */
 export function PageRenderer({ page, themeBundleUrl, themeName, themeCssUrl }: PageRendererProps) {
@@ -129,21 +130,23 @@ export function PageRenderer({ page, themeBundleUrl, themeName, themeCssUrl }: P
   const [loading, setLoading] = useState(() => getLoadedTheme(themeName) === null);
   const [error, setError] = useState<string | null>(null);
 
-  // Inject the theme stylesheet — idempotently. If the server already emitted a
-  // <link data-theme-stylesheet="…"> (see app/[slug]/page.tsx) we skip, so there
-  // is never a duplicate; if it didn't (older page.tsx), we inject it here.
+  // Theme stylesheet. Rendered declaratively (NOT injected in an effect) so React
+  // 19 hoists it into the server-rendered <head> as a render-blocking, deduped
+  // resource. This is what kills the flash of unstyled content: the CSS is fetched
+  // during initial HTML parse and applied before any theme content paints. The
+  // `precedence` prop is what makes React treat it as a hoistable stylesheet; it is
+  // emitted in every render branch and deduped by href, so it stays in <head>
+  // across the loading → loaded transition.
   const effectiveCssUrl =
     themeCssUrl ?? (themeBundleUrl ? themeBundleUrl.replace(/\.js$/i, ".css") : undefined);
-  useEffect(() => {
-    if (!effectiveCssUrl || typeof document === "undefined") return;
-    const selector = `link[data-theme-stylesheet="${CSS.escape(themeName)}"]`;
-    if (document.querySelector(selector)) return;
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = effectiveCssUrl;
-    link.setAttribute("data-theme-stylesheet", themeName);
-    document.head.appendChild(link);
-  }, [effectiveCssUrl, themeName]);
+  const themeStylesheet = effectiveCssUrl ? (
+    <link
+      rel="stylesheet"
+      href={effectiveCssUrl}
+      precedence="theme"
+      data-theme-stylesheet={themeName}
+    />
+  ) : null;
 
   useEffect(() => {
     // Check cache first
@@ -173,6 +176,7 @@ export function PageRenderer({ page, themeBundleUrl, themeName, themeCssUrl }: P
     // the download starts immediately even when page.tsx didn't emit a preload.
     return (
       <>
+        {themeStylesheet}
         <link rel="preload" as="script" href={themeBundleUrl} crossOrigin="anonymous" />
         <div className="min-h-screen" aria-hidden="true" />
       </>
@@ -181,12 +185,15 @@ export function PageRenderer({ page, themeBundleUrl, themeName, themeCssUrl }: P
 
   if (error || !themeModule) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <p className="text-lg font-semibold text-destructive">Error loading theme</p>
-          <p className="text-sm text-muted-foreground">{error || "Theme module not found"}</p>
+      <>
+        {themeStylesheet}
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-center">
+            <p className="text-lg font-semibold text-destructive">Error loading theme</p>
+            <p className="text-sm text-muted-foreground">{error || "Theme module not found"}</p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -202,8 +209,10 @@ export function PageRenderer({ page, themeBundleUrl, themeName, themeCssUrl }: P
   );
 
   return (
-    <div className="min-h-screen">
-      {sortedSections.map((section, index) => {
+    <>
+      {themeStylesheet}
+      <div className="min-h-screen">
+        {sortedSections.map((section, index) => {
         const resolvedKey = getSectionComponentKey(
           section.sectionKey,
           themeModule.sectionsComponents
@@ -260,7 +269,8 @@ export function PageRenderer({ page, themeBundleUrl, themeName, themeCssUrl }: P
           </div>
         );
       })}
-    </div>
+      </div>
+    </>
   );
 }
 
