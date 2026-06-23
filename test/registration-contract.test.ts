@@ -14,8 +14,8 @@ import { assertContract } from "./contract-assertions";
 //
 // Loads the freshly-built local dist/theme.bundle.js inside a jsdom window
 // (with the externalized globals the IIFE reads shimmed) and asserts the
-// bundle self-registered on window.__THETA_THEMES__ under its package.json
-// name with non-empty sections.
+// bundle self-registered on window.__THETA_THEMES__ under its resolved theme
+// name (process.env.THEME_NAME ?? package.json name) with non-empty sections.
 //
 // Security (ASVS V14): this test ONLY ever evals the locally-built
 // dist/theme.bundle.js — a controlled, in-repo build artifact — never a
@@ -24,7 +24,12 @@ import { assertContract } from "./contract-assertions";
 const pkg = JSON.parse(
   readFileSync(resolve(__dirname, "../package.json"), "utf-8"),
 );
-const EXPECTED_NAME: string = pkg.name; // "theta-theme-default"
+// THEME-01: vite.config bakes __THEME_NAME__ from `process.env.THEME_NAME ||
+// pkg.name`, so the bundle registers under the platform-supplied THEME_NAME when
+// the deploy workflow sets it (= the name the deployed site looks it up by), and
+// under the package.json name for standalone/local builds. This test mirrors that
+// exact expression so it validates the real registration key in both contexts.
+const EXPECTED_NAME: string = process.env.THEME_NAME || pkg.name;
 
 describe("theme registration contract", () => {
   let win: any;
@@ -62,12 +67,13 @@ describe("theme registration contract", () => {
     win.eval(bundle);
   });
 
-  it("registers under the package.json name", () => {
+  it("registers under the resolved theme name (THEME_NAME ?? package.json name)", () => {
     expect(win.__THETA_THEMES__[EXPECTED_NAME]).toBeDefined();
   });
 
-  it("registration key is NOT a stale hardcoded literal", () => {
-    // guards the exact bug: registering under 'project-theta-theme'
+  it("registers under exactly one key — the resolved theme name", () => {
+    // The single registration key must be EXPECTED_NAME (the platform THEME_NAME
+    // in CI, pkg.name locally) — no stale literal and no duplicate registration.
     expect(Object.keys(win.__THETA_THEMES__)).toEqual([EXPECTED_NAME]);
   });
 
