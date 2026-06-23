@@ -9,7 +9,11 @@ const pkg = JSON.parse(readFileSync(resolve(__dirname, "package.json"), "utf-8")
 export default defineConfig({
   define: {
     // Must be JSON.stringify'd — `define` does a raw text substitution.
-    __THEME_NAME__: JSON.stringify(pkg.name),
+    // THEME-01: prefer the platform-supplied THEME_NAME (set by the deploy
+    // workflow from the Strapi theme name) so the bundle registers on
+    // window.__THETA_THEMES__ under the SAME name the deployed site looks it up
+    // by. Falls back to package.json name for standalone/local builds.
+    __THEME_NAME__: JSON.stringify(process.env.THEME_NAME || pkg.name),
   },
   plugins: [
     react(),
