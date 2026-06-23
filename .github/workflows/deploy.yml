@@ -1,4 +1,4 @@
-# theta-workflow-version: 1.3.0
+# theta-workflow-version: 1.4.0
 # Theme Site Deployment Workflow
 #
 # This workflow expects the theme repository (source branch checked out to theme-source/)
@@ -143,6 +143,14 @@ jobs:
         id: build-theme
         if: github.event.inputs.skip_bundle_build != 'true'
         working-directory: theme-source
+        env:
+          # THEME-01: the bundle must register on window.__THETA_THEMES__ under the
+          # SAME name the deployed site looks it up by (NEXT_PUBLIC_THEME_NAME, set
+          # below from this same value). The theme's vite.config bakes
+          # __THEME_NAME__ from process.env.THEME_NAME ?? pkg.name, so passing it
+          # here guarantees registration name == lookup name for any theme,
+          # regardless of the theme's package.json name.
+          THEME_NAME: ${{ github.event.inputs.theme_name || github.event.repository.name }}
         run: |
           echo "=== Build Theme Bundle ==="
           if [ ! -f "package.json" ]; then
