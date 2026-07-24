@@ -2,6 +2,7 @@ import type React from "react";
 import { Hero, heroSettingsSchema } from "./sections/Hero";
 import { Header, headerSettingsSchema } from "./sections/Header";
 import { Team, teamSettingsSchema } from "./sections/Team";
+import { ContactForm, contactFormSettingsSchema } from "./sections/ContactForm";
 import { FeatureBlock, featureBlockSettingsSchema } from "./blocks/Feature";
 import { TeamMemberBlock, teamMemberBlockSettingsSchema } from "./blocks/TeamMember";
 
@@ -9,12 +10,14 @@ export const sectionsComponents = {
   hero: Hero,
   header: Header,
   team: Team,
+  "contact-form": ContactForm,
 };
 
 export const sectionSettingsSchemas = {
   hero: heroSettingsSchema,
   header: headerSettingsSchema,
   team: teamSettingsSchema,
+  "contact-form": contactFormSettingsSchema,
 };
 
 // Block components (Shopify-style) - add blocks here as needed
