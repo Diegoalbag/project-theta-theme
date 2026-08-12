@@ -89,4 +89,17 @@ describe("theme registration contract", () => {
   it("passes the shared assertContract helper end-to-end", () => {
     expect(() => assertContract(win, EXPECTED_NAME)).not.toThrow();
   });
+
+  // Phase 21 (D-14): the built bundle registers a component AND a settings
+  // schema under each reserved blog section key, so a manifest declaring
+  // `article`/`archive` templates (theta.config.json) never seeds an orphan
+  // section the bundle cannot render.
+  it.each(["article-body", "archive-list"])(
+    "registers a component and a settings schema under the reserved '%s' key",
+    (key) => {
+      const mod = win.__THETA_THEMES__[EXPECTED_NAME];
+      expect(mod.sectionsComponents[key]).toBeTypeOf("function");
+      expect(Array.isArray(mod.sectionSettingsSchemas[key])).toBe(true);
+    },
+  );
 });

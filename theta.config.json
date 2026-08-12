@@ -1,0 +1,28 @@
+{
+  "name": "theta-theme-default",
+  "version": "0.1.1",
+  "description": "Theta's reference default theme -- header, hero, team and contact-form marketing sections plus a working blog (article and archive templates).",
+  "entry": "dist/theme.bundle.js",
+  "sections": [
+    { "key": "header", "name": "Header" },
+    { "key": "hero", "name": "Hero" },
+    { "key": "team", "name": "Team" },
+    { "key": "contact-form", "name": "Contact Form" },
+    { "key": "article-body", "name": "Article Body" },
+    { "key": "archive-list", "name": "Archive List" }
+  ],
+  "templates": [
+    {
+      "key": "article",
+      "name": "Article",
+      "description": "A single blog post.",
+      "sections": ["header", "article-body"]
+    },
+    {
+      "key": "archive",
+      "name": "Archive",
+      "description": "The blog index, category archives and tag archives.",
+      "sections": ["header", "archive-list"]
+    }
+  ]
+}

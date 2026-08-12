@@ -488,3 +488,132 @@ export const featureCardSettingsSchema = [
   { id: "description", label: "Description",          type: "textarea", default: "Feature description" },
 ]
 ```
+
+---
+
+## Article and archive templates
+
+A theme can declare a working blog by implementing two reserved templates and the two
+reserved section slots each one requires. This is the platform's `project-theta-fe`
+contract (Phase 21, `lib/theme-contract/article-contract.ts`) — a theme reads it, but
+never extends it. This repo (`theta-theme-default`) is the reference implementation:
+`theta.config.json` at the repo root, `src/sections/ArticleBody/`, and
+`src/sections/Archive/` are the worked example every section below points at.
+
+### Reserved keys
+
+| Reserved key | Kind | Meaning |
+|---|---|---|
+| `article` | template key | A single blog post page. |
+| `archive` | template key | The one listing template covering `/blog`, category archives and tag archives alike — not three separate templates. |
+| `article-body` | section key | The prose slot inside an `article` template. |
+| `archive-list` | section key | The post-list slot inside an `archive` template. |
+
+Matching is exact, case-sensitive `===` — no trimming, no case folding.
+
+### Declaring the templates in `theta.config.json`
+
+Alongside the existing `sections[]` array, a theme declares a `templates[]` array. Each
+entry's `sections` list is REQUIRED — it names section keys that pre-populate that
+template the moment it is first seeded (a client can reorder/reconfigure afterwards in
+the customizer, exactly like a page template):
+
+```json
+{
+  "templates": [
+    {
+      "key": "article",
+      "name": "Article",
+      "description": "A single blog post.",
+      "sections": ["header", "article-body"]
+    },
+    {
+      "key": "archive",
+      "name": "Archive",
+      "description": "The blog index, category archives and tag archives.",
+      "sections": ["header", "archive-list"]
+    }
+  ]
+}
+```
+
+A template is only counted as "supported" by the platform when its `sections` list
+includes the required slot for that key (`article` → `article-body`, `archive` →
+`archive-list`). A theme with no `templates[]` at all is the day-one default, not an
+error — the platform degrades visibly rather than refusing to install.
+
+**A manifest change after first seed does not propagate to an already-seeded
+template.** Editing `templates[]` and re-syncing changes what a NEW go-live seeds; it
+does not reach a template that was already created.
+
+### Every section on an article template receives the `article` prop
+
+Not just the body slot — EVERY section rendered inside an `article` template (a header,
+a custom hero, anything) receives the resolved post as one `article` prop, alongside its
+own template-authored `section.data`. That is what lets a theme's own header read
+`article.title` for a page `<title>`-style treatment, or a hero read
+`article.featuredImage`, with no second injection mechanism.
+
+### `ArticleProp` — the published post shape
+
+Exactly eleven fields, all required, never `undefined`. Empty values are `""` / `null` /
+`[]`, so a section never needs an optional-chaining guard for a MISSING field — only for
+an intentionally empty one.
+
+```ts
+interface ArticleProp {
+  documentId: string
+  title: string
+  slug: string
+  body: string                 // bare, server-sanitized HTML — see below
+  excerpt: string
+  featuredImage: { url: string; width: number | null; height: number | null } | null
+  category: { name: string; slug: string; description: string | null } | null
+  tags: Array<{ name: string; slug: string; description: string | null }>
+  author: { name: string; avatarUrl: string | null } | null
+  publishedAt: string | null
+  updatedAt: string | null
+}
+```
+
+`featuredImage` carries **no alt-text field in v1** — this is an accepted platform
+tradeoff, not an oversight. Use `article.title` as the alt text substitute (see
+`ArticleBody.tsx` and `Archive.tsx` in this repo for the worked example).
+
+### `ArchiveProp` — the published listing shape
+
+`posts` reuses the SAME `ArticleProp` shape per post — one published contract, used
+identically on the article and archive surfaces. `term` is always an object, never
+nullable: `kind: "all"` with an empty `name` on the blog index, `kind: "category"` or
+`kind: "tag"` with the resolved term's real name/description on those archives.
+
+```ts
+interface ArchiveProp {
+  posts: ArticleProp[]
+  term: { kind: "all" | "category" | "tag"; name: string; description: string | null }
+  page: { current: number; pageSize: number; pageCount: number; total: number }
+}
+```
+
+`page` carries the pagination numbers only — this repo's `Archive` section renders a
+plain "showing N of M" count from it; the actual next/previous navigation is a routing
+concern this phase does not own (see `Archive.tsx`'s comments).
+
+### The platform ships no prose stylesheet — styling the body is the theme's job
+
+The stored `article.body` is bare sanitized HTML limited to `h1-h6, p, strong, em, a,
+ul/ol/li, img, br` (the exact tag set `project-theta-fe`'s
+`lib/sanitize/article-body-allowlist.ts` admits). The platform deliberately ships **no**
+prose stylesheet, and this theme's own Tailwind preflight strips default styling from
+every one of those tags. `src/sections/ArticleBody/ArticleBody.tsx` in this repo is the
+worked example: it applies an explicit Tailwind descendant utility class for every one
+of those tags directly on the container, and `test/article-body-styling.test.ts` is the
+gate that fails the build if a future edit drops one. Copy that pattern rather than
+reinventing it — an unstyled `article-body` section renders unstyled prose to a tenant's
+visitors.
+
+`ArticleBody` renders `article.body` through React's raw-HTML escape hatch
+(`dangerouslySetInnerHTML`) with NO sanitizing, unescaping or rewriting step of its own.
+The platform's server write path is the single sanitization gate for that HTML; a theme
+must never add a second, weaker pass in front of or behind it.
+
