@@ -4,20 +4,23 @@ import { Header, headerSettingsSchema } from "./sections/Header";
 import { Team, teamSettingsSchema } from "./sections/Team";
 import { ContactForm, contactFormSettingsSchema } from "./sections/ContactForm";
 import { ArticleBody, articleBodySettingsSchema } from "./sections/ArticleBody";
+import { Archive, archiveSettingsSchema } from "./sections/Archive";
 import { FeatureBlock, featureBlockSettingsSchema } from "./blocks/Feature";
 import { TeamMemberBlock, teamMemberBlockSettingsSchema } from "./blocks/TeamMember";
 
-// "article-body" (Phase 21 D-05) is the platform's reserved section key for
-// the prose slot inside an `article` template -- see project-theta-fe's
-// lib/theme-contract/article-contract.ts and this repo's claude.md
-// ("Article and archive templates"). Not added to sectionBlocksConfig below:
-// the prose slot is a single body, not a block-repeated composition.
+// "article-body" (Phase 21 D-05) and "archive-list" (Phase 21 D-03) are the
+// platform's reserved section keys for the `article`/`archive` templates --
+// see project-theta-fe's lib/theme-contract/article-contract.ts and this
+// repo's claude.md ("Article and archive templates"). Neither is added to
+// sectionBlocksConfig below: the prose slot is a single body and the post
+// list is data-driven, not block-composed.
 export const sectionsComponents = {
   hero: Hero,
   header: Header,
   team: Team,
   "contact-form": ContactForm,
   "article-body": ArticleBody,
+  "archive-list": Archive,
 };
 
 export const sectionSettingsSchemas = {
@@ -26,6 +29,7 @@ export const sectionSettingsSchemas = {
   team: teamSettingsSchema,
   "contact-form": contactFormSettingsSchema,
   "article-body": articleBodySettingsSchema,
+  "archive-list": archiveSettingsSchema,
 };
 
 // Block components (Shopify-style) - add blocks here as needed
