@@ -646,3 +646,34 @@ off-site or script-scheme href, and — since `ArchiveProp.term` carries no slug
 resolve a term archive's own slug from a matching post already present in `posts`
 rather than from a field that does not exist on the contract.
 
+### `related-posts` — an ordinary, optional section, not a reserved key
+
+`src/sections/RelatedPosts/RelatedPosts.tsx` (project-theta-fe Phase 23, D-10) shows
+another post's-worth of context arriving through the SAME `recordProps` seam that already
+carries `article` to every section rendered inside an `article` template (D-4/D-6 above)
+— `relatedPosts?: ArticleProp[] | null`, a sibling prop, never a twelfth `ArticleProp`
+field. Unlike `article-body`/`archive-list`, `related-posts` is deliberately **not** a
+reserved platform key and **not** a required slot: `REQUIRED_SLOT_FOR_TEMPLATE` and the
+article/archive support predicates are untouched by it, and a theme that omits this
+section entirely is still a fully valid article-supporting theme. `ArticleBody` stays
+focused on prose; related posts are page furniture the theme opts into.
+
+It renders one real internal anchor per related post, composed via the same
+`postHref`-style helper `Archive.tsx` uses (own copy, no shared module between sections —
+see "Blog URL convention" above). An absent or empty `relatedPosts` list renders no
+markup at all — an empty related-posts shell is worse than none (D-5) — and a related
+post with an empty slug renders as plain text, never as a link to the listing root.
+
+**Propagation caveat (Task 1 of 23-07, option A):** adding `related-posts` to this
+manifest's `article` template only changes what a theme going live for the FIRST time
+seeds. As the "Declaring the templates" section above already states generally, a
+manifest change after first seed does not propagate to an already-seeded template — the
+platform will not retroactively add this section to a tenant's existing `article`
+template row. On such a tenant, `relatedPosts` data is still fetched and threaded through
+`recordProps`, but nothing renders it until a developer or client adds the section in the
+customizer. This is a deliberate, reversible posture (project-theta-fe DIS-8): a platform
+write that reconciled an already-seeded template's sections could reorder or duplicate
+sections a client has already customized, so no such write is implemented. No tenant runs
+the Phase 22 blog routes yet, so this gap is currently near-hypothetical, not an active
+one.
+

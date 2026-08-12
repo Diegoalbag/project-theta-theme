@@ -9,14 +9,15 @@
     { "key": "team", "name": "Team" },
     { "key": "contact-form", "name": "Contact Form" },
     { "key": "article-body", "name": "Article Body" },
-    { "key": "archive-list", "name": "Archive List" }
+    { "key": "archive-list", "name": "Archive List" },
+    { "key": "related-posts", "name": "Related Posts" }
   ],
   "templates": [
     {
       "key": "article",
       "name": "Article",
       "description": "A single blog post.",
-      "sections": ["header", "article-body"]
+      "sections": ["header", "article-body", "related-posts"]
     },
     {
       "key": "archive",

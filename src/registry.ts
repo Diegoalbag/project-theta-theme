@@ -5,6 +5,7 @@ import { Team, teamSettingsSchema } from "./sections/Team";
 import { ContactForm, contactFormSettingsSchema } from "./sections/ContactForm";
 import { ArticleBody, articleBodySettingsSchema } from "./sections/ArticleBody";
 import { Archive, archiveSettingsSchema } from "./sections/Archive";
+import { RelatedPosts, relatedPostsSettingsSchema } from "./sections/RelatedPosts";
 import { FeatureBlock, featureBlockSettingsSchema } from "./blocks/Feature";
 import { TeamMemberBlock, teamMemberBlockSettingsSchema } from "./blocks/TeamMember";
 
@@ -14,6 +15,11 @@ import { TeamMemberBlock, teamMemberBlockSettingsSchema } from "./blocks/TeamMem
 // repo's claude.md ("Article and archive templates"). Neither is added to
 // sectionBlocksConfig below: the prose slot is a single body and the post
 // list is data-driven, not block-composed.
+//
+// "related-posts" (project-theta-fe Phase 23 D-10) is deliberately NOT a
+// reserved key -- it is an ordinary, optional section a theme may add to the
+// `article` template's sections[] list, same as any marketing section. Also
+// not block-composed, so it is likewise absent from sectionBlocksConfig.
 export const sectionsComponents = {
   hero: Hero,
   header: Header,
@@ -21,6 +27,7 @@ export const sectionsComponents = {
   "contact-form": ContactForm,
   "article-body": ArticleBody,
   "archive-list": Archive,
+  "related-posts": RelatedPosts,
 };
 
 export const sectionSettingsSchemas = {
@@ -30,6 +37,7 @@ export const sectionSettingsSchemas = {
   "contact-form": contactFormSettingsSchema,
   "article-body": articleBodySettingsSchema,
   "archive-list": archiveSettingsSchema,
+  "related-posts": relatedPostsSettingsSchema,
 };
 
 // Block components (Shopify-style) - add blocks here as needed
