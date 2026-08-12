@@ -45,7 +45,7 @@ function postHref(slug: string): string | null {
 
 /** A category or tag archive's own path. */
 function termHref(kind: "category" | "tag", slug: string): string {
-  return `${BLOG_BASE_PATH}/${kind}/${encodeURIComponent(slug)}`;
+  return `/blog/${kind}/${encodeURIComponent(slug)}`;
 }
 
 /**
@@ -56,8 +56,7 @@ function termHref(kind: "category" | "tag", slug: string): string {
  * platform's route shape exists to prevent (D-5).
  */
 function listingHref(kind: BlogSurfaceKind, termSlug: string | null, page: number): string {
-  const base =
-    kind === "index" ? BLOG_BASE_PATH : `${BLOG_BASE_PATH}/${kind}/${encodeURIComponent(termSlug ?? "")}`;
+  const base = kind === "index" ? BLOG_BASE_PATH : termHref(kind, termSlug ?? "");
   if (page <= 1) return base;
   return `${base}/page/${page}`;
 }
