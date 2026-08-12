@@ -595,9 +595,10 @@ interface ArchiveProp {
 }
 ```
 
-`page` carries the pagination numbers only — this repo's `Archive` section renders a
-plain "showing N of M" count from it; the actual next/previous navigation is a routing
-concern this phase does not own (see `Archive.tsx`'s comments).
+`page` carries the pagination numbers only — no URL. This repo's `Archive` section
+renders a "showing N of M" count from it, and composes its own previous/next
+navigation links from those numbers plus `term`. See "Blog URL convention" below for
+how.
 
 ### The platform ships no prose stylesheet — styling the body is the theme's job
 
@@ -616,4 +617,32 @@ visitors.
 (`dangerouslySetInnerHTML`) with NO sanitizing, unescaping or rewriting step of its own.
 The platform's server write path is the single sanitization gate for that HTML; a theme
 must never add a second, weaker pass in front of or behind it.
+
+### Blog URL convention
+
+The platform does **not** hand a theme a URL. `ArticleProp`/`ArchiveProp` are frozen at
+their published field count — no `url`/`href` field exists or will be added for this — so
+a theme composes its own hrefs from the `slug` (and term `name`/`kind`) it already
+receives. A tenant serves exactly four blog route shapes:
+
+| Surface | Page 1 (canonical) | Page N (N > 1) |
+|---|---|---|
+| Post detail | `/blog/{slug}` | — (no pagination) |
+| Blog index | `/blog` | `/blog/page/{n}` |
+| Category archive | `/blog/category/{term-slug}` | `/blog/category/{term-slug}/page/{n}` |
+| Tag archive | `/blog/tag/{term-slug}` | `/blog/tag/{term-slug}/page/{n}` |
+
+**Page 1 collapses to the bare path.** `/blog/page/1` (and the term equivalents) are
+never rendered as a second URL for identical content — the platform redirects them to
+the canonical bare path. A theme's own previous/next links must reproduce this
+collapse rule exactly: a previous-page link out of page 2 must point at the bare path,
+never at an explicit `/page/1`.
+
+`src/sections/Archive/Archive.tsx`'s `postHref`/`termHref`/`listingHref` helpers are the
+worked example: they mirror `project-theta-fe`'s own
+`templates/theme-site/lib/blog-pagination.ts` path algebra byte-for-byte, encode every
+slug segment (`encodeURIComponent`) so a tenant-authored slug can never forge an
+off-site or script-scheme href, and — since `ArchiveProp.term` carries no slug field —
+resolve a term archive's own slug from a matching post already present in `posts`
+rather than from a field that does not exist on the contract.
 
